@@ -9,3 +9,6 @@ vendor/
 *.log
 .env
 .env.local
+test-sites/sites/
+test-sites/.pids
+test-sites/.credentials
