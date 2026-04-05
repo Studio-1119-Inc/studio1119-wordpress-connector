@@ -1,0 +1,106 @@
+<?php
+/**
+ * Main plugin bootstrap. Wires all subsystems together.
+ *
+ * The build step substitutes {{APP_CONST_PREFIX}} in the main plugin file with
+ * the per-app constant prefix (e.g. CATASEO, TRUSYNC). All other files discover
+ * that prefix at runtime via self::const_prefix() so this codebase is fully
+ * app-agnostic — adding a new app requires only an apps.json entry, no PHP
+ * changes.
+ *
+ * @package Studio1119\Connector
+ */
+
+namespace Studio1119\Connector;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+class Plugin {
+
+	const DETECTED_MODE_OPTION_SUFFIX   = '_detected_seo_mode';
+	const MODE_CHECKED_AT_OPTION_SUFFIX = '_mode_checked_at';
+
+	public static function boot() {
+		load_plugin_textdomain(
+			self::const_value( 'TEXT_DOMAIN' ),
+			false,
+			dirname( plugin_basename( self::const_value( 'PLUGIN_FILE' ) ) ) . '/languages'
+		);
+
+		// Re-detect active SEO plugin on every admin page load so mode is always current.
+		add_action( 'admin_init', array( __CLASS__, 'refresh_detected_mode' ) );
+
+		Admin_Page::register();
+		Rest_Bridge::register();
+		Standalone_Head::register();
+	}
+
+	public static function activate() {
+		self::refresh_detected_mode();
+	}
+
+	public static function deactivate() {
+		// No scheduled jobs or external state to tear down. Options are preserved until uninstall.
+	}
+
+	public static function uninstall() {
+		$prefix = self::const_value( 'OPTION_PREFIX' );
+		delete_option( $prefix . self::DETECTED_MODE_OPTION_SUFFIX );
+		delete_option( $prefix . self::MODE_CHECKED_AT_OPTION_SUFFIX );
+	}
+
+	public static function refresh_detected_mode() {
+		$mode   = SEO_Plugin_Detector::detect();
+		$prefix = self::const_value( 'OPTION_PREFIX' );
+		update_option( $prefix . self::DETECTED_MODE_OPTION_SUFFIX, $mode );
+		update_option( $prefix . self::MODE_CHECKED_AT_OPTION_SUFFIX, time() );
+	}
+
+	public static function get_detected_mode() {
+		$prefix = self::const_value( 'OPTION_PREFIX' );
+		$mode   = get_option( $prefix . self::DETECTED_MODE_OPTION_SUFFIX );
+		if ( ! $mode ) {
+			$mode = SEO_Plugin_Detector::detect();
+		}
+		return $mode;
+	}
+
+	/**
+	 * Return the value of a per-app build constant by its suffix.
+	 *
+	 * The main plugin file defines <PREFIX>_VERSION, <PREFIX>_PLUGIN_FILE, etc.
+	 * This helper resolves <PREFIX> once (by convention: the user-defined
+	 * constant whose name ends in _VERSION and has a sibling _PLUGIN_FILE) and
+	 * then returns the value of <PREFIX>_<SUFFIX>.
+	 *
+	 * @param string $suffix e.g. 'VERSION', 'WIDGET_URL', 'MENU_TITLE'.
+	 * @return mixed|null    The constant value, or null if undefined.
+	 */
+	public static function const_value( $suffix ) {
+		$prefix = self::const_prefix();
+		if ( ! $prefix ) {
+			return null;
+		}
+		$name = $prefix . '_' . $suffix;
+		return defined( $name ) ? constant( $name ) : null;
+	}
+
+	public static function const_prefix() {
+		static $cached = null;
+		if ( $cached !== null ) {
+			return $cached;
+		}
+		$user_constants = get_defined_constants( true );
+		$user_constants = isset( $user_constants['user'] ) ? $user_constants['user'] : array();
+		foreach ( $user_constants as $name => $_ ) {
+			if ( substr( $name, -8 ) === '_VERSION' && defined( substr( $name, 0, -8 ) . '_PLUGIN_FILE' ) ) {
+				$cached = substr( $name, 0, -8 );
+				return $cached;
+			}
+		}
+		$cached = '';
+		return $cached;
+	}
+}

@@ -1,0 +1,11 @@
+dist/
+build-output/
+*.zip
+node_modules/
+vendor/
+.DS_Store
+.idea/
+.vscode/
+*.log
+.env
+.env.local

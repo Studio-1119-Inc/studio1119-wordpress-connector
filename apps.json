@@ -1,0 +1,36 @@
+{
+  "apps": {
+    "cataseo": {
+      "plugin_name": "CataSEO for WooCommerce",
+      "plugin_slug": "cataseo-for-woocommerce",
+      "text_domain": "cataseo",
+      "menu_title": "CataSEO",
+      "menu_icon": "dashicons-chart-line",
+      "root_element_id": "cataseo-root",
+      "option_prefix": "cataseo",
+      "meta_prefix": "_cataseo",
+      "description": "AI-powered product descriptions and SEO meta for WooCommerce. Coexists with Yoast, Rank Math, and AIOSEO.",
+      "environments": {
+        "production": "https://app.cataseo.ai",
+        "staging": "https://app-staging.cataseo.ai",
+        "development": "https://cataseo-dev.ngrok.app"
+      }
+    },
+    "trusync": {
+      "plugin_name": "TruSync for WooCommerce",
+      "plugin_slug": "trusync-for-woocommerce",
+      "text_domain": "trusync",
+      "menu_title": "TruSync",
+      "menu_icon": "dashicons-update",
+      "root_element_id": "trusync-root",
+      "option_prefix": "trusync",
+      "meta_prefix": "_trusync",
+      "description": "TruSync product and inventory synchronization for WooCommerce.",
+      "environments": {
+        "production": "https://app.trusync.ai",
+        "staging": "https://app-staging.trusync.ai",
+        "development": "https://trusync-dev.ngrok.app"
+      }
+    }
+  }
+}
