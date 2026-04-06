@@ -22,6 +22,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Maps canonical SEO field names to plugin-specific WordPress post meta keys.
+ */
 class Field_Mapper {
 
 	/**
@@ -41,6 +44,8 @@ class Field_Mapper {
 
 	/**
 	 * All canonical fields this mapper knows about.
+	 *
+	 * @return string[]
 	 */
 	public static function canonical_fields() {
 		return array(
@@ -52,32 +57,38 @@ class Field_Mapper {
 		);
 	}
 
+	/**
+	 * Return the full mode → field → meta-key map.
+	 *
+	 * @return array<string, array<string, string|null>>
+	 */
 	private static function map() {
-		$standalone = Plugin::const_value( 'META_PREFIX' ) ?: '_studio1119';
+		$standalone = Plugin::const_value( 'META_PREFIX' );
+		$standalone = $standalone ? $standalone : '_studio1119';
 
 		return array(
-			SEO_Plugin_Detector::MODE_YOAST => array(
+			SEO_Plugin_Detector::MODE_YOAST      => array(
 				'page_title'       => '_yoast_wpseo_title',
 				'meta_description' => '_yoast_wpseo_metadesc',
 				'og_title'         => '_yoast_wpseo_opengraph-title',
 				'og_description'   => '_yoast_wpseo_opengraph-description',
 				'meta_keywords'    => '_yoast_wpseo_metakeywords',
 			),
-			SEO_Plugin_Detector::MODE_RANK_MATH => array(
+			SEO_Plugin_Detector::MODE_RANK_MATH   => array(
 				'page_title'       => 'rank_math_title',
 				'meta_description' => 'rank_math_description',
 				'og_title'         => 'rank_math_facebook_title',
 				'og_description'   => 'rank_math_facebook_description',
 				'meta_keywords'    => null,
 			),
-			SEO_Plugin_Detector::MODE_AIOSEO => array(
+			SEO_Plugin_Detector::MODE_AIOSEO      => array(
 				'page_title'       => '_aioseo_title',
 				'meta_description' => '_aioseo_description',
 				'og_title'         => '_aioseo_og_title',
 				'og_description'   => '_aioseo_og_description',
 				'meta_keywords'    => null,
 			),
-			SEO_Plugin_Detector::MODE_STANDALONE => array(
+			SEO_Plugin_Detector::MODE_STANDALONE  => array(
 				'page_title'       => $standalone . '_title',
 				'meta_description' => $standalone . '_description',
 				'og_title'         => $standalone . '_og_title',

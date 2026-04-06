@@ -22,14 +22,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Provides REST API endpoints for reading and writing product SEO meta
+ * through the four-mode field mapper.
+ */
 class Rest_Bridge {
 
 	const NAMESPACE_ROOT = 'studio1119/v1';
 
+	/**
+	 * Hook into rest_api_init.
+	 *
+	 * @return void
+	 */
 	public static function register() {
 		add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
 	}
 
+	/**
+	 * Register all REST routes for the SEO bridge.
+	 *
+	 * @return void
+	 */
 	public static function register_routes() {
 		register_rest_route(
 			self::NAMESPACE_ROOT,
@@ -73,11 +87,22 @@ class Rest_Bridge {
 		);
 	}
 
+	/**
+	 * Check whether the current user can manage WooCommerce.
+	 *
+	 * @return bool
+	 */
 	public static function check_permission() {
 		return current_user_can( 'manage_woocommerce' );
 	}
 
-	public static function get_status( \WP_REST_Request $request ) {
+	/**
+	 * Return connector status: detected SEO mode, site URL, and WP/WC versions.
+	 *
+	 * @param \WP_REST_Request $request The REST request (unused).
+	 * @return \WP_REST_Response
+	 */
+	public static function get_status( \WP_REST_Request $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		return rest_ensure_response(
 			array(
 				'mode'       => Plugin::get_detected_mode(),
@@ -88,26 +113,41 @@ class Rest_Bridge {
 		);
 	}
 
+	/**
+	 * Read SEO meta for a single product.
+	 *
+	 * @param \WP_REST_Request $request The REST request containing the product ID.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
 	public static function get_product_seo( \WP_REST_Request $request ) {
 		$post_id = (int) $request['id'];
 		$post    = get_post( $post_id );
-		if ( ! $post || $post->post_type !== 'product' ) {
+		if ( ! $post || 'product' !== $post->post_type ) {
 			return new \WP_Error( 'not_found', 'Product not found', array( 'status' => 404 ) );
 		}
 
 		$mode = Plugin::get_detected_mode();
-		$out  = array( 'mode' => $mode, 'id' => $post_id );
+		$out  = array(
+			'mode' => $mode,
+			'id'   => $post_id,
+		);
 		foreach ( Field_Mapper::canonical_fields() as $field ) {
-			$key            = Field_Mapper::meta_key( $field, $mode );
-			$out[ $field ]  = $key ? (string) get_post_meta( $post_id, $key, true ) : null;
+			$key           = Field_Mapper::meta_key( $field, $mode );
+			$out[ $field ] = $key ? (string) get_post_meta( $post_id, $key, true ) : null;
 		}
 		return rest_ensure_response( $out );
 	}
 
+	/**
+	 * Write SEO meta for a single product.
+	 *
+	 * @param \WP_REST_Request $request The REST request containing the product ID and fields.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
 	public static function update_product_seo( \WP_REST_Request $request ) {
 		$post_id = (int) $request['id'];
 		$post    = get_post( $post_id );
-		if ( ! $post || $post->post_type !== 'product' ) {
+		if ( ! $post || 'product' !== $post->post_type ) {
 			return new \WP_Error( 'not_found', 'Product not found', array( 'status' => 404 ) );
 		}
 
@@ -116,7 +156,7 @@ class Rest_Bridge {
 
 		foreach ( Field_Mapper::canonical_fields() as $field ) {
 			$value = $request->get_param( $field );
-			if ( $value === null ) {
+			if ( null === $value ) {
 				continue;
 			}
 			$key = Field_Mapper::meta_key( $field, $mode );
@@ -127,6 +167,11 @@ class Rest_Bridge {
 			$updated[ $field ] = $key;
 		}
 
-		return rest_ensure_response( array( 'updated' => $updated, 'mode' => $mode ) );
+		return rest_ensure_response(
+			array(
+				'updated' => $updated,
+				'mode'    => $mode,
+			)
+		);
 	}
 }

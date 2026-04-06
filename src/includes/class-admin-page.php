@@ -14,18 +14,33 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Registers the admin page, enqueues the widget script, and renders the mount div.
+ */
 class Admin_Page {
 
 	const PAGE_SLUG = 'studio1119-connector';
 
+	/**
+	 * Hook into admin_menu and admin_enqueue_scripts.
+	 *
+	 * @return void
+	 */
 	public static function register() {
 		add_action( 'admin_menu', array( __CLASS__, 'add_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'maybe_enqueue' ) );
 	}
 
+	/**
+	 * Add the top-level admin menu page.
+	 *
+	 * @return void
+	 */
 	public static function add_menu() {
-		$menu_title = Plugin::const_value( 'MENU_TITLE' ) ?: 'Studio 1119';
-		$menu_icon  = Plugin::const_value( 'MENU_ICON' ) ?: 'dashicons-admin-generic';
+		$menu_title = Plugin::const_value( 'MENU_TITLE' );
+		$menu_title = $menu_title ? $menu_title : 'Studio 1119';
+		$menu_icon  = Plugin::const_value( 'MENU_ICON' );
+		$menu_icon  = $menu_icon ? $menu_icon : 'dashicons-admin-generic';
 
 		add_menu_page(
 			$menu_title,
@@ -38,13 +53,25 @@ class Admin_Page {
 		);
 	}
 
+	/**
+	 * Render the admin page HTML mount point.
+	 *
+	 * @return void
+	 */
 	public static function render() {
-		$root_id = Plugin::const_value( 'ROOT_ID' ) ?: 'studio1119-root';
+		$root_id = Plugin::const_value( 'ROOT_ID' );
+		$root_id = $root_id ? $root_id : 'studio1119-root';
 		echo '<div class="wrap"><div id="' . esc_attr( $root_id ) . '"></div></div>';
 	}
 
+	/**
+	 * Conditionally enqueue the widget script on the connector admin page.
+	 *
+	 * @param string $hook_suffix The current admin page hook suffix.
+	 * @return void
+	 */
 	public static function maybe_enqueue( $hook_suffix ) {
-		if ( strpos( (string) $hook_suffix, self::PAGE_SLUG ) === false ) {
+		if ( false === strpos( (string) $hook_suffix, self::PAGE_SLUG ) ) {
 			return;
 		}
 
@@ -53,11 +80,14 @@ class Admin_Page {
 			return;
 		}
 
+		$version = Plugin::const_value( 'VERSION' );
+		$version = $version ? $version : '0.0.0';
+
 		wp_enqueue_script(
 			'studio1119-connector-widget',
 			trailingslashit( $widget_url ) . 'widget.js',
 			array(),
-			null,
+			$version,
 			true
 		);
 
@@ -70,7 +100,7 @@ class Admin_Page {
 			'nonce'         => wp_create_nonce( 'wp_rest' ),
 			'siteUrl'       => get_site_url(),
 			'adminUrl'      => admin_url(),
-			'pluginVersion' => Plugin::const_value( 'VERSION' ) ?: '0.0.0',
+			'pluginVersion' => $version,
 			'detectedMode'  => Plugin::get_detected_mode(),
 			'fieldMap'      => self::build_field_map(),
 			'currentUser'   => array(
@@ -91,6 +121,11 @@ class Admin_Page {
 		);
 	}
 
+	/**
+	 * Build a map of canonical field names to their meta keys for the current mode.
+	 *
+	 * @return array<string, string|null>
+	 */
 	private static function build_field_map() {
 		$mode   = Plugin::get_detected_mode();
 		$fields = Field_Mapper::canonical_fields();

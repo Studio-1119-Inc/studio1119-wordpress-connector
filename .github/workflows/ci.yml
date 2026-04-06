@@ -27,7 +27,7 @@ jobs:
         run: find src/ -name '*.php' -print0 | xargs -0 -n1 php -l
 
       - name: PHPCS
-        run: phpcs --standard=WordPress --extensions=php --ignore=*/vendor/* src/
+        run: phpcs
 
   build:
     name: Build (${{ matrix.app }} / ${{ matrix.env }})

@@ -17,18 +17,31 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Outputs SEO meta tags in wp_head when no SEO plugin is active (standalone mode).
+ */
 class Standalone_Head {
 
+	/**
+	 * Hook into wp_head at priority 1.
+	 *
+	 * @return void
+	 */
 	public static function register() {
 		add_action( 'wp_head', array( __CLASS__, 'render' ), 1 );
 	}
 
+	/**
+	 * Render SEO meta tags for the current product page.
+	 *
+	 * @return void
+	 */
 	public static function render() {
 		// Double-check: re-detect at render time in addition to using the cached
 		// option, so if a merchant activates Yoast/Rank Math/AIOSEO on the same
 		// request we still cleanly yield to them without waiting for an admin
 		// page load to refresh the cached mode.
-		if ( SEO_Plugin_Detector::detect() !== SEO_Plugin_Detector::MODE_STANDALONE ) {
+		if ( SEO_Plugin_Detector::MODE_STANDALONE !== SEO_Plugin_Detector::detect() ) {
 			return;
 		}
 		if ( ! is_singular( 'product' ) ) {
@@ -48,9 +61,9 @@ class Standalone_Head {
 		$permalink        = get_permalink( $post_id );
 		$featured_img_url = get_the_post_thumbnail_url( $post_id, 'large' );
 
-		$title          = $title ?: $fallback_title;
-		$og_title       = $og_title ?: $title;
-		$og_description = $og_description ?: $description;
+		$title          = $title ? $title : $fallback_title;
+		$og_title       = $og_title ? $og_title : $title;
+		$og_description = $og_description ? $og_description : $description;
 
 		echo "\n<!-- studio1119-connector: standalone SEO head -->\n";
 
@@ -88,6 +101,13 @@ class Standalone_Head {
 		echo "<!-- /studio1119-connector -->\n";
 	}
 
+	/**
+	 * Read a single SEO meta value for a product in standalone mode.
+	 *
+	 * @param int    $post_id The post ID.
+	 * @param string $field   Canonical field name.
+	 * @return string The meta value, or empty string if not set.
+	 */
 	private static function get_meta( $post_id, $field ) {
 		$key = Field_Mapper::meta_key( $field, SEO_Plugin_Detector::MODE_STANDALONE );
 		if ( ! $key ) {

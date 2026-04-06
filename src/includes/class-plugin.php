@@ -17,11 +17,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Plugin bootstrap class. Wires subsystems and provides per-app constant helpers.
+ */
 class Plugin {
 
 	const DETECTED_MODE_OPTION_SUFFIX   = '_detected_seo_mode';
 	const MODE_CHECKED_AT_OPTION_SUFFIX = '_mode_checked_at';
 
+	/**
+	 * Boot the plugin: load text domain, register hooks and subsystems.
+	 *
+	 * @return void
+	 */
 	public static function boot() {
 		load_plugin_textdomain(
 			self::const_value( 'TEXT_DOMAIN' ),
@@ -41,6 +49,11 @@ class Plugin {
 		Standalone_Head::register();
 	}
 
+	/**
+	 * Declare HPOS compatibility with WooCommerce.
+	 *
+	 * @return void
+	 */
 	public static function declare_hpos_compatibility() {
 		if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
 			$plugin_file = self::const_value( 'PLUGIN_FILE' );
@@ -50,20 +63,40 @@ class Plugin {
 		}
 	}
 
+	/**
+	 * Activation hook callback: detect the active SEO mode.
+	 *
+	 * @return void
+	 */
 	public static function activate() {
 		self::refresh_detected_mode();
 	}
 
+	/**
+	 * Deactivation hook callback.
+	 *
+	 * @return void
+	 */
 	public static function deactivate() {
 		// No scheduled jobs or external state to tear down. Options are preserved until uninstall.
 	}
 
+	/**
+	 * Uninstall hook callback: remove plugin options.
+	 *
+	 * @return void
+	 */
 	public static function uninstall() {
 		$prefix = self::const_value( 'OPTION_PREFIX' );
 		delete_option( $prefix . self::DETECTED_MODE_OPTION_SUFFIX );
 		delete_option( $prefix . self::MODE_CHECKED_AT_OPTION_SUFFIX );
 	}
 
+	/**
+	 * Re-detect the active SEO plugin and cache the result.
+	 *
+	 * @return void
+	 */
 	public static function refresh_detected_mode() {
 		$mode   = SEO_Plugin_Detector::detect();
 		$prefix = self::const_value( 'OPTION_PREFIX' );
@@ -71,6 +104,11 @@ class Plugin {
 		update_option( $prefix . self::MODE_CHECKED_AT_OPTION_SUFFIX, time() );
 	}
 
+	/**
+	 * Get the cached detected SEO mode, falling back to live detection.
+	 *
+	 * @return string One of SEO_Plugin_Detector::MODE_* constants.
+	 */
 	public static function get_detected_mode() {
 		$prefix = self::const_value( 'OPTION_PREFIX' );
 		$mode   = get_option( $prefix . self::DETECTED_MODE_OPTION_SUFFIX );
@@ -100,15 +138,23 @@ class Plugin {
 		return defined( $name ) ? constant( $name ) : null;
 	}
 
+	/**
+	 * Discover the per-app constant prefix at runtime.
+	 *
+	 * Scans user-defined constants for one ending in _VERSION that also has a
+	 * sibling _PLUGIN_FILE constant. The prefix is cached for the request.
+	 *
+	 * @return string The constant prefix (e.g. 'CATASEO'), or empty string if not found.
+	 */
 	public static function const_prefix() {
 		static $cached = null;
-		if ( $cached !== null ) {
+		if ( null !== $cached ) {
 			return $cached;
 		}
 		$user_constants = get_defined_constants( true );
 		$user_constants = isset( $user_constants['user'] ) ? $user_constants['user'] : array();
-		foreach ( $user_constants as $name => $_ ) {
-			if ( substr( $name, -8 ) === '_VERSION' && defined( substr( $name, 0, -8 ) . '_PLUGIN_FILE' ) ) {
+		foreach ( $user_constants as $name => $value ) {
+			if ( '_VERSION' === substr( $name, -8 ) && defined( substr( $name, 0, -8 ) . '_PLUGIN_FILE' ) ) {
 				$cached = substr( $name, 0, -8 );
 				return $cached;
 			}

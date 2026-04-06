@@ -17,6 +17,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Detects which SEO plugin is active and returns the corresponding mode constant.
+ */
 class SEO_Plugin_Detector {
 
 	const MODE_YOAST      = 'yoast';
@@ -24,6 +27,11 @@ class SEO_Plugin_Detector {
 	const MODE_AIOSEO     = 'aioseo';
 	const MODE_STANDALONE = 'standalone';
 
+	/**
+	 * Detect the active SEO plugin.
+	 *
+	 * @return string One of the MODE_* constants.
+	 */
 	public static function detect() {
 		if ( defined( 'WPSEO_VERSION' ) || class_exists( 'WPSEO_Options', false ) ) {
 			return self::MODE_YOAST;
@@ -37,7 +45,12 @@ class SEO_Plugin_Detector {
 		return self::MODE_STANDALONE;
 	}
 
+	/**
+	 * Whether the site is running in standalone mode (no SEO plugin detected).
+	 *
+	 * @return bool
+	 */
 	public static function is_standalone() {
-		return self::detect() === self::MODE_STANDALONE;
+		return self::MODE_STANDALONE === self::detect();
 	}
 }
