@@ -98,6 +98,18 @@ while IFS='|' read -r SLUG PORT DB SEO_PLUGIN; do
     # doesn't render the product archive without manual block setup.
     wp --path="$SITE_DIR" theme install storefront --activate --quiet
 
+    # Create a Home page with a product grid and set it as the front page.
+    # (Can't use the Shop page as front page — WC treats it as a static
+    # page instead of the product archive when they're the same.)
+    HOME_ID="$(wp --path="$SITE_DIR" post create \
+        --post_type=page \
+        --post_title='Home' \
+        --post_status=publish \
+        --post_content='[products limit="16" columns="4" orderby="title" order="ASC"]' \
+        --porcelain 2>/dev/null | grep -E '^[0-9]+$')"
+    wp --path="$SITE_DIR" option update show_on_front 'page' --quiet
+    wp --path="$SITE_DIR" option update page_on_front "$HOME_ID" --quiet
+
     echo "[$SLUG] ready at $URL/wp-admin  (login: $ADMIN_USER)"
 done < <(iter_sites)
 
