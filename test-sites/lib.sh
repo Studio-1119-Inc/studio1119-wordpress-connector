@@ -60,6 +60,24 @@ admin_password() {
     echo "$ADMIN_PASSWORD"
 }
 
+db_cmd() {
+    # Use whichever MySQL-compatible client is available and working.
+    # Try mysql first (works with both MySQL and MariaDB), then mariadb.
+    local user="${DB_USER:-root}"
+    for client in mysql mariadb; do
+        if command -v "$client" >/dev/null 2>&1 && "$client" -u "$user" -e "SELECT 1" >/dev/null 2>&1; then
+            echo "$client"
+            return
+        fi
+    done
+    echo "error: no working MySQL/MariaDB client found for user '$user'" >&2
+    exit 1
+}
+
+db_user() {
+    echo "root"
+}
+
 site_path() {
     echo "$SITES_DIR/$1"
 }

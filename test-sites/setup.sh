@@ -19,13 +19,17 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lib.sh"
 
 require_tool wp
-require_tool mariadb
 require_tool jq
 require_tool php
+
+# wp-cli's tarball extraction needs more than PHP's default 128M.
+export WP_CLI_PHP_ARGS="-d memory_limit=512M"
 
 ADMIN_USER="$(admin_user)"
 ADMIN_PASSWORD="$(admin_password)"
 ADMIN_EMAIL="$(admin_email)"
+DB_USER="$(db_user)"
+DB_CLIENT="$(db_cmd)"
 
 mkdir -p "$SITES_DIR"
 
@@ -44,7 +48,7 @@ while IFS='|' read -r SLUG PORT DB SEO_PLUGIN; do
     mkdir -p "$SITE_DIR"
 
     echo "[$SLUG] creating database '$DB'..."
-    mariadb -u root -e "CREATE DATABASE IF NOT EXISTS \`$DB\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    $DB_CLIENT -u "$DB_USER" -e "CREATE DATABASE IF NOT EXISTS \`$DB\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
     echo "[$SLUG] downloading WP core..."
     wp --path="$SITE_DIR" core download --quiet
@@ -52,7 +56,7 @@ while IFS='|' read -r SLUG PORT DB SEO_PLUGIN; do
     echo "[$SLUG] creating wp-config.php..."
     wp --path="$SITE_DIR" config create \
         --dbname="$DB" \
-        --dbuser="root" \
+        --dbuser="$DB_USER" \
         --dbpass="" \
         --dbhost="127.0.0.1" \
         --skip-check \

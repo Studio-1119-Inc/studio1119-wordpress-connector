@@ -11,7 +11,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=lib.sh
 source "$SCRIPT_DIR/lib.sh"
 
-require_tool mariadb
+# mysql or mariadb client needed
+
 
 if [ "${FORCE:-0}" != "1" ]; then
     echo "This will DELETE all test-site databases and files. Continue? [y/N]"
@@ -26,9 +27,12 @@ if [ -f "$PID_FILE" ]; then
     "$SCRIPT_DIR/stop.sh"
 fi
 
+DB_USER="$(db_user)"
+DB_CLIENT="$(db_cmd)"
+
 while IFS='|' read -r SLUG PORT DB SEO; do
     echo "[$SLUG] dropping database '$DB'"
-    mariadb -u root -e "DROP DATABASE IF EXISTS \`$DB\`;"
+    $DB_CLIENT -u "$DB_USER" -e "DROP DATABASE IF EXISTS \`$DB\`;"
 done < <(iter_sites)
 
 if [ -d "$SITES_DIR" ]; then
