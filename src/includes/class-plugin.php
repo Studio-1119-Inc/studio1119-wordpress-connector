@@ -29,12 +29,25 @@ class Plugin {
 			dirname( plugin_basename( self::const_value( 'PLUGIN_FILE' ) ) ) . '/languages'
 		);
 
+		// Declare compatibility with WooCommerce HPOS (High-Performance Order Storage).
+		// This plugin only reads/writes product SEO meta — it never touches orders.
+		add_action( 'before_woocommerce_init', array( __CLASS__, 'declare_hpos_compatibility' ) );
+
 		// Re-detect active SEO plugin on every admin page load so mode is always current.
 		add_action( 'admin_init', array( __CLASS__, 'refresh_detected_mode' ) );
 
 		Admin_Page::register();
 		Rest_Bridge::register();
 		Standalone_Head::register();
+	}
+
+	public static function declare_hpos_compatibility() {
+		if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+			$plugin_file = self::const_value( 'PLUGIN_FILE' );
+			if ( $plugin_file ) {
+				\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', $plugin_file, true );
+			}
+		}
 	}
 
 	public static function activate() {
