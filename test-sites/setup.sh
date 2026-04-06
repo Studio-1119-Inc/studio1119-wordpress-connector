@@ -86,6 +86,13 @@ while IFS='|' read -r SLUG PORT DB SEO_PLUGIN; do
     # subsequent product imports don't race with it.
     wp --path="$SITE_DIR" wc --user="$ADMIN_USER" tool run install_pages >/dev/null 2>&1 || true
 
+    # Pretty permalinks and shop as front page so products are visible
+    # on the storefront immediately.
+    wp --path="$SITE_DIR" option update permalink_structure '/%postname%/' --quiet
+    wp --path="$SITE_DIR" option update show_on_front 'page' --quiet
+    wp --path="$SITE_DIR" option update page_on_front "$(wp --path="$SITE_DIR" option get woocommerce_shop_page_id 2>/dev/null)" --quiet
+    wp --path="$SITE_DIR" rewrite flush --quiet
+
     echo "[$SLUG] ready at $URL/wp-admin  (login: $ADMIN_USER)"
 done < <(iter_sites)
 
