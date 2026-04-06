@@ -50,7 +50,11 @@ class Rest_Bridge {
 					'permission_callback' => array( __CLASS__, 'check_permission' ),
 					'callback'            => array( __CLASS__, 'get_product_seo' ),
 					'args'                => array(
-						'id' => array( 'validate_callback' => 'is_numeric' ),
+						'id' => array(
+							'validate_callback' => function ( $value ) {
+								return is_numeric( $value );
+							},
+						),
 					),
 				),
 				array(
@@ -58,7 +62,11 @@ class Rest_Bridge {
 					'permission_callback' => array( __CLASS__, 'check_permission' ),
 					'callback'            => array( __CLASS__, 'update_product_seo' ),
 					'args'                => array(
-						'id' => array( 'validate_callback' => 'is_numeric' ),
+						'id' => array(
+							'validate_callback' => function ( $value ) {
+								return is_numeric( $value );
+							},
+						),
 					),
 				),
 			)
