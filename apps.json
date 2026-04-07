@@ -13,7 +13,8 @@
       "environments": {
         "production": "https://app.cataseo.ai",
         "staging": "https://app-staging.cataseo.ai",
-        "development": "https://cataseo-dev.ngrok.app"
+        "development": "https://funny-ram-sought.ngrok-free.app",
+        "local": "http://localhost:3002"
       }
     },
     "trusync": {

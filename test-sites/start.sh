@@ -26,7 +26,7 @@ while IFS='|' read -r SLUG PORT DB SEO; do
     fi
 
     echo "[$SLUG] starting on http://localhost:$PORT"
-    ( cd "$SITE_DIR" && wp server --host=127.0.0.1 --port="$PORT" >/dev/null 2>&1 ) &
+    ( cd "$SITE_DIR" && PHP_CLI_SERVER_WORKERS=4 wp server --host=127.0.0.1 --port="$PORT" >/dev/null 2>&1 ) &
     echo "$SLUG|$!|$PORT" >> "$PID_FILE"
 done < <(iter_sites)
 
