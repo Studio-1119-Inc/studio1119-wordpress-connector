@@ -64,12 +64,22 @@ class Admin_Page {
 		$slug       = self::page_slug();
 		$admin_url  = admin_url( "admin.php?page={$slug}" );
 
-		echo '<div class="notice notice-info"><p>';
-		echo '<strong>' . esc_html( $menu_title ) . ':</strong> ';
-		echo 'No SEO plugin detected. SEO meta tags (title, description, Open Graph) are managed through the ';
-		echo '<a href="' . esc_url( $admin_url ) . '">' . esc_html( $menu_title ) . ' dashboard</a>';
-		echo ' and injected directly into your product pages.';
-		echo '</p></div>';
+		// Check if this product has been optimized (has SEO meta written).
+		$post_id   = get_the_ID();
+		$has_title = $post_id ? get_post_meta( $post_id, Field_Mapper::meta_key( 'page_title', SEO_Plugin_Detector::MODE_STANDALONE ), true ) : '';
+
+		if ( $has_title ) {
+			echo '<div class="notice notice-success"><p>';
+			echo '<strong>' . esc_html( $menu_title ) . '</strong> has optimized your SEO meta tags and inserted them directly into this product\'s page. All set! ';
+			echo 'Manage your SEO from the <a href="' . esc_url( $admin_url ) . '">' . esc_html( $menu_title ) . ' dashboard</a>.';
+			echo '</p></div>';
+		} else {
+			echo '<div class="notice notice-info"><p>';
+			echo '<strong>' . esc_html( $menu_title ) . ':</strong> ';
+			echo 'No SEO plugin detected. Optimize this product from the <a href="' . esc_url( $admin_url ) . '">' . esc_html( $menu_title ) . ' dashboard</a> ';
+			echo 'and SEO meta tags will be inserted directly into the page.';
+			echo '</p></div>';
+		}
 	}
 
 	/**
