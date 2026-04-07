@@ -35,8 +35,10 @@ define( '{{APP_CONST_PREFIX}}_MENU_ICON', '{{APP_MENU_ICON}}' );
 require_once __DIR__ . '/includes/class-seo-plugin-detector.php';
 require_once __DIR__ . '/includes/class-field-mapper.php';
 require_once __DIR__ . '/includes/class-standalone-head.php';
+require_once __DIR__ . '/includes/class-widget-auth.php';
 require_once __DIR__ . '/includes/class-admin-page.php';
 require_once __DIR__ . '/includes/class-rest-bridge.php';
+require_once __DIR__ . '/includes/class-seo-meta-notifier.php';
 require_once __DIR__ . '/includes/class-plugin.php';
 
 register_activation_hook( __FILE__, array( '\Studio1119\Connector\Plugin', 'activate' ) );

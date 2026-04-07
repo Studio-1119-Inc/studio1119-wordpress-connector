@@ -19,7 +19,18 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Admin_Page {
 
-	const PAGE_SLUG = 'studio1119-connector';
+	/**
+	 * Derive the admin page slug from the per-app option prefix so that
+	 * CataSEO and TruSync can coexist on the same WordPress instance.
+	 * E.g. "cataseo" → "cataseo-connector", "trusync" → "trusync-connector".
+	 *
+	 * @return string
+	 */
+	public static function page_slug() {
+		$prefix = Plugin::const_value( 'OPTION_PREFIX' );
+		$prefix = $prefix ? $prefix : 'studio1119';
+		return $prefix . '-connector';
+	}
 
 	/**
 	 * Hook into admin_menu and admin_enqueue_scripts.
@@ -46,7 +57,7 @@ class Admin_Page {
 			$menu_title,
 			$menu_title,
 			'manage_woocommerce',
-			self::PAGE_SLUG,
+			self::page_slug(),
 			array( __CLASS__, 'render' ),
 			$menu_icon,
 			56
@@ -71,7 +82,7 @@ class Admin_Page {
 	 * @return void
 	 */
 	public static function maybe_enqueue( $hook_suffix ) {
-		if ( false === strpos( (string) $hook_suffix, self::PAGE_SLUG ) ) {
+		if ( false === strpos( (string) $hook_suffix, self::page_slug() ) ) {
 			return;
 		}
 
@@ -94,13 +105,17 @@ class Admin_Page {
 		// Hand the widget everything it needs to talk back to this WP site:
 		// REST root, nonce (for authenticated nonce-based requests), site URL,
 		// current user info, detected SEO mode, and canonical field → meta key map.
+		// The widgetToken is a one-time token verified by the remote backend.
 		$current_user = wp_get_current_user();
+		$widget_token = Widget_Auth::generate_token();
 		$boot_data    = array(
 			'restUrl'       => esc_url_raw( rest_url() ),
 			'nonce'         => wp_create_nonce( 'wp_rest' ),
 			'siteUrl'       => get_site_url(),
+			'appUrl'        => trailingslashit( $widget_url ),
 			'adminUrl'      => admin_url(),
 			'pluginVersion' => $version,
+			'widgetToken'   => $widget_token,
 			'detectedMode'  => Plugin::get_detected_mode(),
 			'fieldMap'      => self::build_field_map(),
 			'currentUser'   => array(

@@ -44,9 +44,24 @@ class Plugin {
 		// Re-detect active SEO plugin on every admin page load so mode is always current.
 		add_action( 'admin_init', array( __CLASS__, 'refresh_detected_mode' ) );
 
+		// Tell WooCommerce to run its REST authentication (consumer key/secret)
+		// for our custom namespace. Without this, WC only authenticates requests
+		// to its own wc/ namespace, and our studio1119/v1 endpoints fall back to
+		// standard WP auth (which rejects server-to-server Basic Auth calls).
+		add_filter(
+			'woocommerce_rest_is_request_to_rest_api',
+			function ( $is_rest ) {
+				if ( ! empty( $_SERVER['REQUEST_URI'] ) && false !== strpos( $_SERVER['REQUEST_URI'], 'studio1119/v1' ) ) {
+					return true;
+				}
+				return $is_rest;
+			}
+		);
+
 		Admin_Page::register();
 		Rest_Bridge::register();
 		Standalone_Head::register();
+		SEO_Meta_Notifier::register();
 	}
 
 	/**

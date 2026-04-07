@@ -4,9 +4,9 @@
  * SEO meta through the four-mode field mapper, without having to know the
  * underlying meta key schema itself.
  *
- * All endpoints require `manage_woocommerce` capability. Authentication is
- * via the standard WP REST nonce that Admin_Page injected into the widget
- * boot payload.
+ * All endpoints require either a logged-in WP user with `manage_woocommerce`
+ * capability (nonce auth from the widget iframe) or valid WC API key Basic
+ * Auth credentials (server-to-server calls from the remote backend).
  *
  * Exposed routes (namespace: studio1119/v1):
  *   GET  /seo/status
@@ -31,6 +31,16 @@ class Rest_Bridge {
 	const NAMESPACE_ROOT = 'studio1119/v1';
 
 	/**
+	 * Flag indicating whether the REST bridge is currently writing meta.
+	 *
+	 * Set to true during update_product_seo() so that SEO_Meta_Notifier
+	 * can skip notifications for writes originating from our own widget.
+	 *
+	 * @var bool
+	 */
+	private static $writing = false;
+
+	/**
 	 * Hook into rest_api_init.
 	 *
 	 * @return void
@@ -52,6 +62,19 @@ class Rest_Bridge {
 				'methods'             => 'GET',
 				'permission_callback' => array( __CLASS__, 'check_permission' ),
 				'callback'            => array( __CLASS__, 'get_status' ),
+			)
+		);
+
+		// Token verification endpoint — used by the remote backend to verify
+		// one-time widget tokens. Authenticated via WC HTTP Basic Auth
+		// (consumer_key:consumer_secret), not WP nonce.
+		register_rest_route(
+			self::NAMESPACE_ROOT,
+			'/verify-token',
+			array(
+				'methods'             => 'POST',
+				'permission_callback' => array( 'Studio1119\Connector\Widget_Auth', 'check_wc_auth' ),
+				'callback'            => array( __CLASS__, 'verify_widget_token' ),
 			)
 		);
 
@@ -88,12 +111,32 @@ class Rest_Bridge {
 	}
 
 	/**
-	 * Check whether the current user can manage WooCommerce.
+	 * Whether the REST bridge is currently writing post meta.
+	 *
+	 * Used by SEO_Meta_Notifier to skip notifications for our own writes.
+	 *
+	 * @return bool
+	 */
+	public static function is_writing() {
+		return self::$writing;
+	}
+
+	/**
+	 * Check whether the request is authorized.
+	 *
+	 * Accepts either:
+	 *   1. A logged-in WP user with `manage_woocommerce` capability (nonce-based, widget iframe).
+	 *   2. WC API key Basic Auth (server-to-server calls from the remote backend).
 	 *
 	 * @return bool
 	 */
 	public static function check_permission() {
-		return current_user_can( 'manage_woocommerce' );
+		if ( current_user_can( 'manage_woocommerce' ) ) {
+			return true;
+		}
+
+		// Fall back to WC API key auth for server-to-server requests.
+		return Widget_Auth::check_wc_auth();
 	}
 
 	/**
@@ -154,6 +197,9 @@ class Rest_Bridge {
 		$mode    = Plugin::get_detected_mode();
 		$updated = array();
 
+		// Set writing flag so SEO_Meta_Notifier skips our own writes.
+		self::$writing = true;
+
 		foreach ( Field_Mapper::canonical_fields() as $field ) {
 			$value = $request->get_param( $field );
 			if ( null === $value ) {
@@ -167,10 +213,43 @@ class Rest_Bridge {
 			$updated[ $field ] = $key;
 		}
 
+		self::$writing = false;
+
 		return rest_ensure_response(
 			array(
 				'updated' => $updated,
 				'mode'    => $mode,
+			)
+		);
+	}
+
+	/**
+	 * Verify a one-time widget token.
+	 *
+	 * Called by the remote backend to confirm a widget session is legitimate.
+	 * The token was generated on admin page load and passed via the iframe URL.
+	 *
+	 * @param \WP_REST_Request $request The REST request containing the token.
+	 * @return \WP_REST_Response
+	 */
+	public static function verify_widget_token( \WP_REST_Request $request ) {
+		$token = $request->get_param( 'token' );
+
+		$data = Widget_Auth::verify_token( $token );
+		if ( false === $data ) {
+			return rest_ensure_response(
+				array(
+					'valid' => false,
+					'error' => 'Invalid or expired token',
+				)
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'valid'    => true,
+				'user_id'  => $data['user_id'],
+				'site_url' => get_site_url(),
 			)
 		);
 	}
