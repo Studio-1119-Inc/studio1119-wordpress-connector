@@ -1,0 +1,24 @@
+{
+    "name": "studio1119/wordpress-connector",
+    "description": "Thin shim plugin connecting WooCommerce stores to Studio 1119 apps.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require-dev": {
+        "phpunit/phpunit": "^9.6",
+        "brain/monkey": "^2.6",
+        "mockery/mockery": "^1.6"
+    },
+    "autoload": {
+        "classmap": [
+            "src/includes/"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Studio1119\\Connector\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {}
+    }
+}
