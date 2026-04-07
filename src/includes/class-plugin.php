@@ -58,6 +58,20 @@ class Plugin {
 			}
 		);
 
+		// In development (ngrok-free.app URLs), add the header that bypasses
+		// ngrok's browser interstitial on outbound WP HTTP requests (e.g. the
+		// WC OAuth callback to our CataSEO backend).
+		$widget_url = self::const_value( 'WIDGET_URL' );
+		if ( $widget_url && false !== strpos( $widget_url, 'ngrok-free.app' ) ) {
+			add_filter(
+				'http_request_args',
+				function ( $args ) {
+					$args['headers']['ngrok-skip-browser-warning'] = '1';
+					return $args;
+				}
+			);
+		}
+
 		Admin_Page::register();
 		Rest_Bridge::register();
 		Standalone_Head::register();

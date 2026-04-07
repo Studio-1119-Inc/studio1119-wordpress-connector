@@ -148,10 +148,11 @@ class Rest_Bridge {
 	public static function get_status( \WP_REST_Request $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		return rest_ensure_response(
 			array(
-				'mode'       => Plugin::get_detected_mode(),
-				'site_url'   => get_site_url(),
-				'wp_version' => get_bloginfo( 'version' ),
-				'wc_version' => defined( 'WC_VERSION' ) ? WC_VERSION : null,
+				'mode'        => Plugin::get_detected_mode(),
+				'site_url'    => get_site_url(),
+				'admin_email' => get_option( 'admin_email', '' ),
+				'wp_version'  => get_bloginfo( 'version' ),
+				'wc_version'  => defined( 'WC_VERSION' ) ? WC_VERSION : null,
 			)
 		);
 	}
@@ -174,10 +175,29 @@ class Rest_Bridge {
 			'mode' => $mode,
 			'id'   => $post_id,
 		);
-		foreach ( Field_Mapper::canonical_fields() as $field ) {
-			$key           = Field_Mapper::meta_key( $field, $mode );
-			$out[ $field ] = $key ? (string) get_post_meta( $post_id, $key, true ) : null;
+
+		// AIOSEO stores data in its own table, not post_meta.
+		if ( SEO_Plugin_Detector::MODE_AIOSEO === $mode ) {
+			$row = self::aioseo_get_row( $post_id );
+			$out['page_title']       = $row ? (string) $row->title : null;
+			$out['meta_description'] = $row ? (string) $row->description : null;
+			$out['og_title']         = $row ? (string) $row->og_title : null;
+			$out['og_description']   = $row ? (string) $row->og_description : null;
+			// AIOSEO stores keyphrases as JSON: {"focus":{"keyphrase":"...","score":0,...}}
+			$out['meta_keywords']    = null;
+			if ( $row && ! empty( $row->keyphrases ) ) {
+				$kp = json_decode( $row->keyphrases, true );
+				if ( isset( $kp['focus']['keyphrase'] ) ) {
+					$out['meta_keywords'] = $kp['focus']['keyphrase'];
+				}
+			}
+		} else {
+			foreach ( Field_Mapper::canonical_fields() as $field ) {
+				$key           = Field_Mapper::meta_key( $field, $mode );
+				$out[ $field ] = $key ? (string) get_post_meta( $post_id, $key, true ) : null;
+			}
 		}
+
 		return rest_ensure_response( $out );
 	}
 
@@ -200,17 +220,54 @@ class Rest_Bridge {
 		// Set writing flag so SEO_Meta_Notifier skips our own writes.
 		self::$writing = true;
 
-		foreach ( Field_Mapper::canonical_fields() as $field ) {
-			$value = $request->get_param( $field );
-			if ( null === $value ) {
-				continue;
+		// AIOSEO stores data in its own table, not post_meta.
+		if ( SEO_Plugin_Detector::MODE_AIOSEO === $mode ) {
+			$col_map = array(
+				'page_title'       => 'title',
+				'meta_description' => 'description',
+				'og_title'         => 'og_title',
+				'og_description'   => 'og_description',
+			);
+			$data = array();
+			foreach ( $col_map as $field => $col ) {
+				$value = $request->get_param( $field );
+				if ( null !== $value ) {
+					$data[ $col ]      = sanitize_text_field( (string) $value );
+					$updated[ $field ] = $col;
+				}
 			}
-			$key = Field_Mapper::meta_key( $field, $mode );
-			if ( ! $key ) {
-				continue; // Field not storable in this mode (e.g. meta_keywords outside Yoast).
+			// Handle keyphrases (focus keyword) — stored as JSON in AIOSEO.
+			$keywords = $request->get_param( 'meta_keywords' );
+			if ( null !== $keywords ) {
+				$keyphrase = is_array( $keywords ) ? implode( ', ', $keywords ) : sanitize_text_field( (string) $keywords );
+				$data['keyphrases'] = wp_json_encode(
+					array(
+						'focus'      => array(
+							'keyphrase' => $keyphrase,
+							'score'     => 0,
+							'analysis'  => array(),
+						),
+						'additional' => array(),
+					)
+				);
+				$updated['meta_keywords'] = 'keyphrases';
 			}
-			update_post_meta( $post_id, $key, sanitize_text_field( (string) $value ) );
-			$updated[ $field ] = $key;
+			if ( ! empty( $data ) ) {
+				self::aioseo_upsert_row( $post_id, $data );
+			}
+		} else {
+			foreach ( Field_Mapper::canonical_fields() as $field ) {
+				$value = $request->get_param( $field );
+				if ( null === $value ) {
+					continue;
+				}
+				$key = Field_Mapper::meta_key( $field, $mode );
+				if ( ! $key ) {
+					continue; // Field not storable in this mode (e.g. meta_keywords outside Yoast).
+				}
+				update_post_meta( $post_id, $key, sanitize_text_field( (string) $value ) );
+				$updated[ $field ] = $key;
+			}
 		}
 
 		self::$writing = false;
@@ -252,5 +309,53 @@ class Rest_Bridge {
 				'site_url' => get_site_url(),
 			)
 		);
+	}
+
+	// =========================================================================
+	// AIOSEO custom table helpers
+	// =========================================================================
+
+	/**
+	 * Read the AIOSEO row for a given post.
+	 *
+	 * @param int $post_id WordPress post ID.
+	 * @return object|null  Row from wp_aioseo_posts, or null.
+	 */
+	private static function aioseo_get_row( $post_id ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'aioseo_posts';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $wpdb->get_row(
+			$wpdb->prepare( "SELECT title, description, og_title, og_description, keyphrases FROM {$table} WHERE post_id = %d", $post_id )
+		);
+	}
+
+	/**
+	 * Insert or update the AIOSEO row for a given post.
+	 *
+	 * @param int   $post_id WordPress post ID.
+	 * @param array $data    Column => value pairs to write.
+	 * @return void
+	 */
+	private static function aioseo_upsert_row( $post_id, $data ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'aioseo_posts';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$existing = $wpdb->get_var(
+			$wpdb->prepare( "SELECT id FROM {$table} WHERE post_id = %d", $post_id )
+		);
+
+		if ( $existing ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update( $table, $data, array( 'post_id' => $post_id ) );
+		} else {
+			$data['post_id'] = $post_id;
+			$data['created']  = current_time( 'mysql' );
+			$data['updated']  = current_time( 'mysql' );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->insert( $table, $data );
+		}
 	}
 }

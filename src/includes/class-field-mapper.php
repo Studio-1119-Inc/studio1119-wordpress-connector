@@ -79,21 +79,21 @@ class Field_Mapper {
 				'meta_description' => 'rank_math_description',
 				'og_title'         => 'rank_math_facebook_title',
 				'og_description'   => 'rank_math_facebook_description',
-				'meta_keywords'    => null,
+				'meta_keywords'    => 'rank_math_focus_keyword',
 			),
 			SEO_Plugin_Detector::MODE_AIOSEO     => array(
 				'page_title'       => '_aioseo_title',
 				'meta_description' => '_aioseo_description',
 				'og_title'         => '_aioseo_og_title',
 				'og_description'   => '_aioseo_og_description',
-				'meta_keywords'    => null,
+				'meta_keywords'    => '_aioseo_keyphrases', // Handled specially in Rest_Bridge
 			),
 			SEO_Plugin_Detector::MODE_STANDALONE => array(
 				'page_title'       => $standalone . '_title',
 				'meta_description' => $standalone . '_description',
 				'og_title'         => $standalone . '_og_title',
 				'og_description'   => $standalone . '_og_description',
-				'meta_keywords'    => null,
+				'meta_keywords'    => $standalone . '_keywords',
 			),
 		);
 	}
