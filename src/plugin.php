@@ -39,6 +39,7 @@ require_once __DIR__ . '/includes/class-widget-auth.php';
 require_once __DIR__ . '/includes/class-admin-page.php';
 require_once __DIR__ . '/includes/class-rest-bridge.php';
 require_once __DIR__ . '/includes/class-seo-meta-notifier.php';
+require_once __DIR__ . '/includes/class-taxonomy-notifier.php';
 require_once __DIR__ . '/includes/class-plugin.php';
 
 register_activation_hook( __FILE__, array( '\Studio1119\Connector\Plugin', 'activate' ) );

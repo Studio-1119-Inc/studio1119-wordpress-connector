@@ -76,6 +76,7 @@ class Plugin {
 		Rest_Bridge::register();
 		Standalone_Head::register();
 		SEO_Meta_Notifier::register();
+		Taxonomy_Notifier::register();
 	}
 
 	/**
