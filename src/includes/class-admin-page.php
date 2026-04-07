@@ -40,6 +40,36 @@ class Admin_Page {
 	public static function register() {
 		add_action( 'admin_menu', array( __CLASS__, 'add_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'maybe_enqueue' ) );
+		add_action( 'admin_notices', array( __CLASS__, 'standalone_mode_notice' ) );
+	}
+
+	/**
+	 * Show a notice on product edit screens when standalone mode is active,
+	 * explaining where SEO fields are managed.
+	 *
+	 * @return void
+	 */
+	public static function standalone_mode_notice() {
+		if ( SEO_Plugin_Detector::MODE_STANDALONE !== Plugin::get_detected_mode() ) {
+			return;
+		}
+
+		$screen = get_current_screen();
+		if ( ! $screen || 'product' !== $screen->post_type || 'post' !== $screen->base ) {
+			return;
+		}
+
+		$menu_title = Plugin::const_value( 'MENU_TITLE' );
+		$menu_title = $menu_title ? $menu_title : 'Studio 1119';
+		$slug       = self::page_slug();
+		$admin_url  = admin_url( "admin.php?page={$slug}" );
+
+		echo '<div class="notice notice-info"><p>';
+		echo '<strong>' . esc_html( $menu_title ) . ':</strong> ';
+		echo 'No SEO plugin detected. SEO meta tags (title, description, Open Graph) are managed through the ';
+		echo '<a href="' . esc_url( $admin_url ) . '">' . esc_html( $menu_title ) . ' dashboard</a>';
+		echo ' and injected directly into your product pages.';
+		echo '</p></div>';
 	}
 
 	/**
