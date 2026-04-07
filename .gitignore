@@ -13,3 +13,5 @@ test-sites/sites/
 test-sites/.pids
 test-sites/.credentials
 test-sites/logs/
+test-sites/ssl/
+.phpunit.result.cache
