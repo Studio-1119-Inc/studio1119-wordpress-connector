@@ -327,6 +327,7 @@ class Rest_Bridge {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $wpdb->get_row(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is built from $wpdb->prefix, not user input.
 			$wpdb->prepare( "SELECT title, description, og_title, og_description, keyphrases FROM {$table} WHERE post_id = %d", $post_id )
 		);
 	}
@@ -344,6 +345,7 @@ class Rest_Bridge {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$existing = $wpdb->get_var(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is built from $wpdb->prefix, not user input.
 			$wpdb->prepare( "SELECT id FROM {$table} WHERE post_id = %d", $post_id )
 		);
 

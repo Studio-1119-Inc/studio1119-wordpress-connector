@@ -51,7 +51,7 @@ class Plugin {
 		add_filter(
 			'woocommerce_rest_is_request_to_rest_api',
 			function ( $is_rest ) {
-				if ( ! empty( $_SERVER['REQUEST_URI'] ) && false !== strpos( $_SERVER['REQUEST_URI'], 'studio1119/v1' ) ) {
+				if ( ! empty( $_SERVER['REQUEST_URI'] ) && false !== strpos( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), 'studio1119/v1' ) ) {
 					return true;
 				}
 				return $is_rest;

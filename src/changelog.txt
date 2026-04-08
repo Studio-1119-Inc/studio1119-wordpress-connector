@@ -1,0 +1,10 @@
+*** {{APP_PLUGIN_NAME}} Changelog ***
+
+2026-04-08 - version {{APP_VERSION}}
+* New - Initial release
+* Added - AI-powered product SEO optimization
+* Added - Express mode for individual product optimization
+* Added - Batch optimization for entire catalogs
+* Added - Category page SEO optimization
+* Added - Compatible with Yoast SEO, Rank Math, All in One SEO, and standalone
+* Added - HPOS compatible

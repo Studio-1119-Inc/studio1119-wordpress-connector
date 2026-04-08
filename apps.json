@@ -1,8 +1,25 @@
 {
   "apps": {
     "cataseo": {
-      "plugin_name": "CataSEO for WooCommerce",
-      "plugin_slug": "cataseo-for-woocommerce",
+      "plugin_name": "CataSEO",
+      "plugin_slug": "cataseo",
+      "text_domain": "cataseo",
+      "menu_title": "CataSEO",
+      "menu_icon": "dashicons-chart-line",
+      "root_element_id": "cataseo-root",
+      "option_prefix": "cataseo",
+      "meta_prefix": "_cataseo",
+      "description": "AI-powered product descriptions and SEO meta for WooCommerce. Coexists with Yoast, Rank Math, and AIOSEO.",
+      "environments": {
+        "production": "https://app.cataseo.ai",
+        "staging": "https://app-staging.cataseo.ai",
+        "development": "https://funny-ram-sought.ngrok-free.app",
+        "local": "http://localhost:3002"
+      }
+    },
+    "cataseo-dev": {
+      "plugin_name": "CataSEO (Dev)",
+      "plugin_slug": "cataseo-dev",
       "text_domain": "cataseo",
       "menu_title": "CataSEO",
       "menu_icon": "dashicons-chart-line",
