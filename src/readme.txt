@@ -2,7 +2,7 @@
 Contributors: studio1119
 Tags: woocommerce, seo, ai, product descriptions, meta tags
 Requires at least: 6.4
-Tested up to: 6.7
+Tested up to: 6.9.4
 Requires PHP: 7.4
 Stable tag: {{APP_VERSION}}
 License: GPLv2 or later

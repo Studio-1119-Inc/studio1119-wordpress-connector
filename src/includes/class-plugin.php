@@ -120,6 +120,8 @@ class Plugin {
 		$prefix = self::const_value( 'OPTION_PREFIX' );
 		delete_option( $prefix . self::DETECTED_MODE_OPTION_SUFFIX );
 		delete_option( $prefix . self::MODE_CHECKED_AT_OPTION_SUFFIX );
+		delete_option( $prefix . Admin_Page::CONNECTED_OPTION_SUFFIX );
+		delete_option( $prefix . Admin_Page::CONNECTED_USER_OPTION_SUFFIX );
 	}
 
 	/**

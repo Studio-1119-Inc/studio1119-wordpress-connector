@@ -12,7 +12,7 @@
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * WC requires at least: 9.6
- * WC tested up to: 10.6
+ * WC tested up to: 10.6.2
  *
  * @package Studio1119\Connector
  */

@@ -1,9 +1,12 @@
 <?php
 /**
- * Admin menu registration and widget mount.
+ * Admin menu registration and native status portal.
  *
- * Registers a top-level admin menu item, renders a page that contains the
- * mount <div>, and enqueues the remote widget.js onto only that page.
+ * Two-state UI:
+ *   - Not connected: "Connect to CataSEO" button initiates WC OAuth handshake
+ *   - Connected: status summary + "Launch Dashboard" button opens external SaaS
+ *
+ * No iFrames — compliant with WooCommerce Marketplace UX guidelines.
  *
  * @package Studio1119\Connector
  */
@@ -15,14 +18,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Registers the admin page, enqueues the widget script, and renders the mount div.
+ * Registers the admin page and renders the native status portal.
  */
 class Admin_Page {
 
+	const CONNECTED_OPTION_SUFFIX     = '_connected';
+	const CONNECTED_USER_OPTION_SUFFIX = '_connected_user';
+
 	/**
-	 * Derive the admin page slug from the per-app option prefix so that
-	 * CataSEO and TruSync can coexist on the same WordPress instance.
-	 * E.g. "cataseo" → "cataseo-connector", "trusync" → "trusync-connector".
+	 * Derive the admin page slug from the per-app option prefix.
 	 *
 	 * @return string
 	 */
@@ -33,19 +37,80 @@ class Admin_Page {
 	}
 
 	/**
-	 * Hook into admin_menu and admin_enqueue_scripts.
+	 * Hook into admin_menu, admin_init, and admin_notices.
 	 *
 	 * @return void
 	 */
 	public static function register() {
 		add_action( 'admin_menu', array( __CLASS__, 'add_menu' ) );
-		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'maybe_enqueue' ) );
+		add_action( 'admin_init', array( __CLASS__, 'handle_oauth_return' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'standalone_mode_notice' ) );
 	}
 
 	/**
-	 * Show a notice on product edit screens when standalone mode is active,
-	 * explaining where SEO fields are managed.
+	 * Handle the OAuth return redirect.
+	 *
+	 * After the WC OAuth handshake, the merchant is redirected back to the
+	 * WP admin with ?cataseo_connected=1. We detect this, store the connected
+	 * state, and redirect to a clean URL so the param isn't bookmarked.
+	 *
+	 * @return void
+	 */
+	public static function handle_oauth_return() {
+		$prefix = Plugin::const_value( 'OPTION_PREFIX' );
+		if ( ! $prefix ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- OAuth return redirect, no state change from user input.
+		if ( ! isset( $_GET[ $prefix . '_connected' ] ) ) {
+			return;
+		}
+
+		// Mark as connected and store the display name from the query param if provided.
+		update_option( $prefix . self::CONNECTED_OPTION_SUFFIX, '1' );
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$user_label = isset( $_GET[ $prefix . '_user' ] )
+			? sanitize_text_field( wp_unslash( $_GET[ $prefix . '_user' ] ) )
+			: '';
+		if ( $user_label ) {
+			update_option( $prefix . self::CONNECTED_USER_OPTION_SUFFIX, $user_label );
+		}
+
+		// Redirect to clean URL to avoid re-triggering on refresh.
+		wp_safe_redirect( admin_url( 'admin.php?page=' . self::page_slug() ) );
+		exit;
+	}
+
+	/**
+	 * Check whether the store is connected to the external SaaS.
+	 *
+	 * @return bool
+	 */
+	public static function is_connected() {
+		$prefix = Plugin::const_value( 'OPTION_PREFIX' );
+		if ( ! $prefix ) {
+			return false;
+		}
+		return '1' === get_option( $prefix . self::CONNECTED_OPTION_SUFFIX );
+	}
+
+	/**
+	 * Get the connected user/account display label (if stored).
+	 *
+	 * @return string
+	 */
+	public static function connected_user_label() {
+		$prefix = Plugin::const_value( 'OPTION_PREFIX' );
+		if ( ! $prefix ) {
+			return '';
+		}
+		return get_option( $prefix . self::CONNECTED_USER_OPTION_SUFFIX, '' );
+	}
+
+	/**
+	 * Show a notice on product edit screens when standalone mode is active.
 	 *
 	 * @return void
 	 */
@@ -64,7 +129,6 @@ class Admin_Page {
 		$slug       = self::page_slug();
 		$admin_url  = admin_url( "admin.php?page={$slug}" );
 
-		// Check if this product has been optimized (has SEO meta written).
 		$post_id   = get_the_ID();
 		$has_title = $post_id ? get_post_meta( $post_id, Field_Mapper::meta_key( 'page_title', SEO_Plugin_Detector::MODE_STANDALONE ), true ) : '';
 
@@ -83,111 +147,224 @@ class Admin_Page {
 	}
 
 	/**
-	 * Add the top-level admin menu page.
+	 * Add submenu page under WooCommerce.
 	 *
 	 * @return void
 	 */
 	public static function add_menu() {
 		$menu_title = Plugin::const_value( 'MENU_TITLE' );
 		$menu_title = $menu_title ? $menu_title : 'Studio 1119';
-		$menu_icon  = Plugin::const_value( 'MENU_ICON' );
-		$menu_icon  = $menu_icon ? $menu_icon : 'dashicons-admin-generic';
 
-		add_menu_page(
-			$menu_title,
+		add_submenu_page(
+			'woocommerce',
+			$menu_title . ' Dashboard',
 			$menu_title,
 			'manage_woocommerce',
 			self::page_slug(),
-			array( __CLASS__, 'render' ),
-			$menu_icon,
-			56
+			array( __CLASS__, 'render' )
 		);
 	}
 
 	/**
-	 * Render the admin page HTML mount point.
+	 * Render the admin portal page.
+	 *
+	 * Two states:
+	 *   1. Not connected → "Connect to CataSEO" button (initiates OAuth)
+	 *   2. Connected → status summary + "Launch Dashboard" button
 	 *
 	 * @return void
 	 */
 	public static function render() {
-		$root_id = Plugin::const_value( 'ROOT_ID' );
-		$root_id = $root_id ? $root_id : 'studio1119-root';
-		echo '<div class="wrap"><div id="' . esc_attr( $root_id ) . '"></div></div>';
+		$menu_title  = Plugin::const_value( 'MENU_TITLE' );
+		$menu_title  = $menu_title ? $menu_title : 'Studio 1119';
+		$widget_url  = Plugin::const_value( 'WIDGET_URL' );
+		$version     = Plugin::const_value( 'VERSION' );
+		$version     = $version ? $version : '0.0.0';
+		$mode        = Plugin::get_detected_mode();
+		$mode_label  = self::mode_display_name( $mode );
+		$connected   = self::is_connected();
+		$user_label  = self::connected_user_label();
+
+		// Count WooCommerce products.
+		$product_count = 0;
+		if ( function_exists( 'wc_get_products' ) ) {
+			$product_count = count( wc_get_products( array( 'limit' => -1, 'return' => 'ids' ) ) );
+		}
+
+		$dashboard_url = $widget_url ? trailingslashit( $widget_url ) : '#';
+		?>
+		<div class="wrap woocommerce">
+			<h1><?php echo esc_html( $menu_title ); ?></h1>
+
+			<?php if ( ! $connected ) : ?>
+				<?php self::render_connect_state( $menu_title, $widget_url, $mode_label, $product_count, $version ); ?>
+			<?php else : ?>
+				<?php self::render_connected_state( $menu_title, $dashboard_url, $user_label, $mode_label, $product_count, $version, $widget_url ); ?>
+			<?php endif; ?>
+		</div>
+		<?php
 	}
 
 	/**
-	 * Conditionally enqueue the widget script on the connector admin page.
+	 * Render the "not connected" state with the OAuth connect button.
 	 *
-	 * @param string $hook_suffix The current admin page hook suffix.
+	 * @param string $menu_title    App display name.
+	 * @param string $widget_url    Backend URL.
+	 * @param string $mode_label    Detected SEO mode label.
+	 * @param int    $product_count Number of WC products.
+	 * @param string $version       Plugin version.
 	 * @return void
 	 */
-	public static function maybe_enqueue( $hook_suffix ) {
-		if ( false === strpos( (string) $hook_suffix, self::page_slug() ) ) {
-			return;
-		}
+	private static function render_connect_state( $menu_title, $widget_url, $mode_label, $product_count, $version ) {
+		$prefix    = Plugin::const_value( 'OPTION_PREFIX' );
+		$return_url = admin_url( 'admin.php?page=' . self::page_slug() . '&' . $prefix . '_connected=1' );
 
-		$widget_url = Plugin::const_value( 'WIDGET_URL' );
-		if ( ! $widget_url ) {
-			return;
-		}
+		// Build the OAuth initiation URL on our SaaS backend.
+		$site_url  = get_site_url();
+		$auth_url  = $widget_url
+			? trailingslashit( $widget_url ) . 'api/woocommerce/auth?' . http_build_query( array(
+				'site_url'   => $site_url,
+				'return_url' => $return_url,
+			) )
+			: '#';
+		?>
+		<div class="card" style="max-width: 680px; margin-top: 20px;">
+			<h2 style="margin-top: 0;">
+				<?php esc_html_e( 'Connection Status:', 'cataseo' ); ?>
+				<span style="color: #d63638;"><?php esc_html_e( 'Not Connected', 'cataseo' ); ?></span>
+			</h2>
 
-		$version = Plugin::const_value( 'VERSION' );
-		$version = $version ? $version : '0.0.0';
+			<p>
+				<?php
+				printf(
+					/* translators: %s: app name */
+					esc_html__( 'Connect your WooCommerce store to %s to start optimizing your product SEO with AI.', 'cataseo' ),
+					esc_html( $menu_title )
+				);
+				?>
+			</p>
 
-		wp_enqueue_script(
-			'studio1119-connector-widget',
-			trailingslashit( $widget_url ) . 'widget.js',
-			array(),
-			$version,
-			true
-		);
+			<table class="widefat fixed striped" style="margin: 20px 0;">
+				<tbody>
+					<tr>
+						<td><strong><?php esc_html_e( 'SEO Plugin Mode', 'cataseo' ); ?></strong></td>
+						<td><?php echo esc_html( $mode_label ); ?></td>
+					</tr>
+					<tr>
+						<td><strong><?php esc_html_e( 'WooCommerce Products', 'cataseo' ); ?></strong></td>
+						<td><?php echo esc_html( number_format_i18n( $product_count ) ); ?></td>
+					</tr>
+					<tr>
+						<td><strong><?php esc_html_e( 'Plugin Version', 'cataseo' ); ?></strong></td>
+						<td><?php echo esc_html( $version ); ?></td>
+					</tr>
+				</tbody>
+			</table>
 
-		// Hand the widget everything it needs to talk back to this WP site:
-		// REST root, nonce (for authenticated nonce-based requests), site URL,
-		// current user info, detected SEO mode, and canonical field → meta key map.
-		// The widgetToken is a one-time token verified by the remote backend.
-		$current_user = wp_get_current_user();
-		$widget_token = Widget_Auth::generate_token();
-		$boot_data    = array(
-			'restUrl'       => esc_url_raw( rest_url() ),
-			'nonce'         => wp_create_nonce( 'wp_rest' ),
-			'siteUrl'       => get_site_url(),
-			'appUrl'        => trailingslashit( $widget_url ),
-			'adminUrl'      => admin_url(),
-			'pluginVersion' => $version,
-			'widgetToken'   => $widget_token,
-			'detectedMode'  => Plugin::get_detected_mode(),
-			'fieldMap'      => self::build_field_map(),
-			'currentUser'   => array(
-				'id'    => get_current_user_id(),
-				'email' => $current_user->user_email,
-				'name'  => $current_user->display_name,
-			),
-		);
-
-		// Global variable name derived from the build prefix: CataSEO → CATASEOBoot,
-		// TruSync → TRUSYNCBoot. The widget reads whichever one matches its build.
-		$global_var = Plugin::const_prefix() . 'Boot';
-
-		wp_add_inline_script(
-			'studio1119-connector-widget',
-			'window.' . $global_var . ' = ' . wp_json_encode( $boot_data ) . ';',
-			'before'
-		);
+			<p>
+				<a href="<?php echo esc_url( $auth_url ); ?>"
+				   class="button button-primary button-hero">
+					<?php
+					printf(
+						/* translators: %s: app name */
+						esc_html__( 'Connect to %s', 'cataseo' ),
+						esc_html( $menu_title )
+					);
+					?>
+				</a>
+			</p>
+			<p class="description">
+				<?php esc_html_e( 'You will be asked to approve read/write access to your WooCommerce products. This is required for SEO optimization.', 'cataseo' ); ?>
+			</p>
+		</div>
+		<?php
 	}
 
 	/**
-	 * Build a map of canonical field names to their meta keys for the current mode.
+	 * Render the "connected" state with status summary and dashboard link.
 	 *
-	 * @return array<string, string|null>
+	 * @param string $menu_title    App display name.
+	 * @param string $dashboard_url External dashboard URL.
+	 * @param string $user_label    Connected account label.
+	 * @param string $mode_label    Detected SEO mode label.
+	 * @param int    $product_count Number of WC products.
+	 * @param string $version       Plugin version.
+	 * @param string $widget_url    Backend URL.
+	 * @return void
 	 */
-	private static function build_field_map() {
-		$mode   = Plugin::get_detected_mode();
-		$fields = Field_Mapper::canonical_fields();
-		$out    = array();
-		foreach ( $fields as $field ) {
-			$out[ $field ] = Field_Mapper::meta_key( $field, $mode );
+	private static function render_connected_state( $menu_title, $dashboard_url, $user_label, $mode_label, $product_count, $version, $widget_url ) {
+		$connected_label = $user_label ? $user_label : get_bloginfo( 'name' );
+		?>
+		<div class="card" style="max-width: 680px; margin-top: 20px;">
+			<h2 style="margin-top: 0;">
+				<?php esc_html_e( 'Connection Status:', 'cataseo' ); ?>
+				<span style="color: #00a32a;"><?php esc_html_e( 'Connected', 'cataseo' ); ?></span>
+			</h2>
+
+			<table class="widefat fixed striped" style="margin: 20px 0;">
+				<tbody>
+					<tr>
+						<td><strong><?php esc_html_e( 'Connected As', 'cataseo' ); ?></strong></td>
+						<td><?php echo esc_html( $connected_label ); ?></td>
+					</tr>
+					<tr>
+						<td><strong><?php esc_html_e( 'SEO Plugin Mode', 'cataseo' ); ?></strong></td>
+						<td><?php echo esc_html( $mode_label ); ?></td>
+					</tr>
+					<tr>
+						<td><strong><?php esc_html_e( 'WooCommerce Products', 'cataseo' ); ?></strong></td>
+						<td><?php echo esc_html( number_format_i18n( $product_count ) ); ?></td>
+					</tr>
+					<tr>
+						<td><strong><?php esc_html_e( 'Plugin Version', 'cataseo' ); ?></strong></td>
+						<td><?php echo esc_html( $version ); ?></td>
+					</tr>
+					<tr>
+						<td><strong><?php esc_html_e( 'Backend', 'cataseo' ); ?></strong></td>
+						<td><?php echo esc_html( $widget_url ); ?></td>
+					</tr>
+				</tbody>
+			</table>
+
+			<p>
+				<a href="<?php echo esc_url( $dashboard_url ); ?>"
+				   class="button button-primary button-hero"
+				   target="_blank"
+				   rel="noopener noreferrer">
+					<?php
+					printf(
+						/* translators: %s: app name */
+						esc_html__( 'Launch %s Dashboard &rarr;', 'cataseo' ),
+						esc_html( $menu_title )
+					);
+					?>
+				</a>
+			</p>
+			<p class="description">
+				<?php esc_html_e( 'Manage SEO optimization, bulk operations, and billing on the external platform.', 'cataseo' ); ?>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Return a human-readable label for the detected SEO mode.
+	 *
+	 * @param string $mode One of SEO_Plugin_Detector::MODE_* constants.
+	 * @return string
+	 */
+	private static function mode_display_name( $mode ) {
+		switch ( $mode ) {
+			case SEO_Plugin_Detector::MODE_YOAST:
+				return 'Yoast SEO';
+			case SEO_Plugin_Detector::MODE_RANKMATH:
+				return 'Rank Math';
+			case SEO_Plugin_Detector::MODE_AIOSEO:
+				return 'All in One SEO';
+			case SEO_Plugin_Detector::MODE_STANDALONE:
+				return 'Standalone (no SEO plugin)';
+			default:
+				return ucfirst( $mode );
 		}
-		return $out;
 	}
 }
