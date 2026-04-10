@@ -44,6 +44,8 @@ require_once __DIR__ . '/includes/class-plugin.php';
 
 register_activation_hook( __FILE__, array( '\Studio1119\Connector\Plugin', 'activate' ) );
 register_deactivation_hook( __FILE__, array( '\Studio1119\Connector\Plugin', 'deactivate' ) );
-register_uninstall_hook( __FILE__, array( '\Studio1119\Connector\Plugin', 'uninstall' ) );
+// Uninstall is handled by uninstall.php (preferred over register_uninstall_hook
+// for WooCommerce Marketplace compliance — includes WP_UNINSTALL_PLUGIN check
+// and multisite cleanup).
 
 add_action( 'plugins_loaded', array( '\Studio1119\Connector\Plugin', 'boot' ) );

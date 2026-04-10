@@ -9,6 +9,7 @@
       "root_element_id": "cataseo-root",
       "option_prefix": "cataseo",
       "meta_prefix": "_cataseo",
+      "docs_url": "https://www.cataseo.ai/docs/woo",
       "description": "AI-powered product descriptions and SEO meta for WooCommerce. Coexists with Yoast, Rank Math, and AIOSEO.",
       "environments": {
         "production": "https://app.cataseo.ai",
@@ -26,6 +27,7 @@
       "root_element_id": "cataseo-root",
       "option_prefix": "cataseo",
       "meta_prefix": "_cataseo",
+      "docs_url": "https://www.cataseo.ai/docs/woo",
       "description": "AI-powered product descriptions and SEO meta for WooCommerce. Coexists with Yoast, Rank Math, and AIOSEO.",
       "environments": {
         "production": "https://app.cataseo.ai",
@@ -43,6 +45,7 @@
       "root_element_id": "trusync-root",
       "option_prefix": "trusync",
       "meta_prefix": "_trusync",
+      "docs_url": "https://www.trusync.ai/docs/woo",
       "description": "TruSync product and inventory synchronization for WooCommerce.",
       "environments": {
         "production": "https://app.trusync.ai",

@@ -191,10 +191,23 @@ class Admin_Page {
 			$product_count = count( wc_get_products( array( 'limit' => -1, 'return' => 'ids' ) ) );
 		}
 
-		$dashboard_url = $widget_url ? trailingslashit( $widget_url ) : '#';
+		// Build SSO dashboard URL: the /api/woocommerce/load endpoint verifies a
+		// one-time token and creates a JWT session, dropping the merchant into
+		// the dashboard already authenticated. Without this, clicking "Launch
+		// Dashboard" would require the merchant to log in again.
+		if ( $connected && $widget_url ) {
+			$widget_token  = Widget_Auth::generate_token();
+			$site_url      = get_site_url();
+			$dashboard_url = trailingslashit( $widget_url ) . 'api/woocommerce/load?' . http_build_query( array(
+				'siteUrl' => $site_url,
+				'token'   => $widget_token,
+			) );
+		} else {
+			$dashboard_url = $widget_url ? trailingslashit( $widget_url ) : '#';
+		}
 		?>
 		<div class="wrap woocommerce">
-			<h1><?php echo esc_html( $menu_title ); ?></h1>
+			<h1><?php echo esc_html( $menu_title ); ?> optimization dashboard</h1>
 
 			<?php if ( ! $connected ) : ?>
 				<?php self::render_connect_state( $menu_title, $widget_url, $mode_label, $product_count, $version ); ?>
@@ -230,15 +243,14 @@ class Admin_Page {
 		?>
 		<div class="card" style="max-width: 680px; margin-top: 20px;">
 			<h2 style="margin-top: 0;">
-				<?php esc_html_e( 'Connection Status:', 'cataseo' ); ?>
-				<span style="color: #d63638;"><?php esc_html_e( 'Not Connected', 'cataseo' ); ?></span>
+				<?php esc_html_e( 'Connect your store', '{{APP_TEXT_DOMAIN}}' ); ?>
 			</h2>
 
 			<p>
 				<?php
 				printf(
 					/* translators: %s: app name */
-					esc_html__( 'Connect your WooCommerce store to %s to start optimizing your product SEO with AI.', 'cataseo' ),
+					esc_html__( 'Connect your WooCommerce store to %s to start optimizing your product SEO with AI.', '{{APP_TEXT_DOMAIN}}' ),
 					esc_html( $menu_title )
 				);
 				?>
@@ -247,15 +259,15 @@ class Admin_Page {
 			<table class="widefat fixed striped" style="margin: 20px 0;">
 				<tbody>
 					<tr>
-						<td><strong><?php esc_html_e( 'SEO Plugin Mode', 'cataseo' ); ?></strong></td>
+						<td><strong><?php esc_html_e( 'SEO plugin mode', '{{APP_TEXT_DOMAIN}}' ); ?></strong></td>
 						<td><?php echo esc_html( $mode_label ); ?></td>
 					</tr>
 					<tr>
-						<td><strong><?php esc_html_e( 'WooCommerce Products', 'cataseo' ); ?></strong></td>
+						<td><strong><?php esc_html_e( 'Products', '{{APP_TEXT_DOMAIN}}' ); ?></strong></td>
 						<td><?php echo esc_html( number_format_i18n( $product_count ) ); ?></td>
 					</tr>
 					<tr>
-						<td><strong><?php esc_html_e( 'Plugin Version', 'cataseo' ); ?></strong></td>
+						<td><strong><?php esc_html_e( 'Plugin version', '{{APP_TEXT_DOMAIN}}' ); ?></strong></td>
 						<td><?php echo esc_html( $version ); ?></td>
 					</tr>
 				</tbody>
@@ -263,20 +275,27 @@ class Admin_Page {
 
 			<p>
 				<a href="<?php echo esc_url( $auth_url ); ?>"
-				   class="button button-primary button-hero">
+				   class="button button-primary button-hero"
+				   aria-label="<?php printf( esc_attr__( 'Connect to %s via WooCommerce authorization', '{{APP_TEXT_DOMAIN}}' ), esc_attr( $menu_title ) ); ?>">
 					<?php
 					printf(
 						/* translators: %s: app name */
-						esc_html__( 'Connect to %s', 'cataseo' ),
+						esc_html__( 'Connect to %s', '{{APP_TEXT_DOMAIN}}' ),
 						esc_html( $menu_title )
 					);
 					?>
 				</a>
 			</p>
 			<p class="description">
-				<?php esc_html_e( 'You will be asked to approve read/write access to your WooCommerce products. This is required for SEO optimization.', 'cataseo' ); ?>
+				<?php esc_html_e( 'You will be asked to approve read and write access to your products. This is required for SEO optimization.', '{{APP_TEXT_DOMAIN}}' ); ?>
 			</p>
 		</div>
+
+		<p style="margin-top: 16px;">
+			<a href="{{APP_DOCS_URL}}" target="_blank" rel="noopener noreferrer">
+				<?php esc_html_e( 'View documentation', '{{APP_TEXT_DOMAIN}}' ); ?>
+			</a>
+		</p>
 		<?php
 	}
 
@@ -297,31 +316,32 @@ class Admin_Page {
 		?>
 		<div class="card" style="max-width: 680px; margin-top: 20px;">
 			<h2 style="margin-top: 0;">
-				<?php esc_html_e( 'Connection Status:', 'cataseo' ); ?>
-				<span style="color: #00a32a;"><?php esc_html_e( 'Connected', 'cataseo' ); ?></span>
+				<?php
+				printf(
+					/* translators: %s: app name */
+					esc_html__( 'Connection active: syncing with %s cloud', '{{APP_TEXT_DOMAIN}}' ),
+					esc_html( $menu_title )
+				);
+				?>
 			</h2>
 
 			<table class="widefat fixed striped" style="margin: 20px 0;">
 				<tbody>
 					<tr>
-						<td><strong><?php esc_html_e( 'Connected As', 'cataseo' ); ?></strong></td>
+						<td><strong><?php esc_html_e( 'Account', '{{APP_TEXT_DOMAIN}}' ); ?></strong></td>
 						<td><?php echo esc_html( $connected_label ); ?></td>
 					</tr>
 					<tr>
-						<td><strong><?php esc_html_e( 'SEO Plugin Mode', 'cataseo' ); ?></strong></td>
+						<td><strong><?php esc_html_e( 'SEO plugin mode', '{{APP_TEXT_DOMAIN}}' ); ?></strong></td>
 						<td><?php echo esc_html( $mode_label ); ?></td>
 					</tr>
 					<tr>
-						<td><strong><?php esc_html_e( 'WooCommerce Products', 'cataseo' ); ?></strong></td>
+						<td><strong><?php esc_html_e( 'Products', '{{APP_TEXT_DOMAIN}}' ); ?></strong></td>
 						<td><?php echo esc_html( number_format_i18n( $product_count ) ); ?></td>
 					</tr>
 					<tr>
-						<td><strong><?php esc_html_e( 'Plugin Version', 'cataseo' ); ?></strong></td>
+						<td><strong><?php esc_html_e( 'Plugin version', '{{APP_TEXT_DOMAIN}}' ); ?></strong></td>
 						<td><?php echo esc_html( $version ); ?></td>
-					</tr>
-					<tr>
-						<td><strong><?php esc_html_e( 'Backend', 'cataseo' ); ?></strong></td>
-						<td><?php echo esc_html( $widget_url ); ?></td>
 					</tr>
 				</tbody>
 			</table>
@@ -330,20 +350,27 @@ class Admin_Page {
 				<a href="<?php echo esc_url( $dashboard_url ); ?>"
 				   class="button button-primary button-hero"
 				   target="_blank"
-				   rel="noopener noreferrer">
+				   rel="noopener noreferrer"
+				   aria-label="<?php printf( esc_attr__( 'Launch %s dashboard in a new tab', '{{APP_TEXT_DOMAIN}}' ), esc_attr( $menu_title ) ); ?>">
 					<?php
 					printf(
 						/* translators: %s: app name */
-						esc_html__( 'Launch %s Dashboard &rarr;', 'cataseo' ),
+						esc_html__( 'Launch %s dashboard', '{{APP_TEXT_DOMAIN}}' ),
 						esc_html( $menu_title )
 					);
 					?>
 				</a>
 			</p>
 			<p class="description">
-				<?php esc_html_e( 'Manage SEO optimization, bulk operations, and billing on the external platform.', 'cataseo' ); ?>
+				<?php esc_html_e( 'Manage SEO optimization, bulk operations, and billing on the external platform.', '{{APP_TEXT_DOMAIN}}' ); ?>
 			</p>
 		</div>
+
+		<p style="margin-top: 16px;">
+			<a href="{{APP_DOCS_URL}}" target="_blank" rel="noopener noreferrer">
+				<?php esc_html_e( 'View documentation', '{{APP_TEXT_DOMAIN}}' ); ?>
+			</a>
+		</p>
 		<?php
 	}
 
@@ -357,7 +384,7 @@ class Admin_Page {
 		switch ( $mode ) {
 			case SEO_Plugin_Detector::MODE_YOAST:
 				return 'Yoast SEO';
-			case SEO_Plugin_Detector::MODE_RANKMATH:
+			case SEO_Plugin_Detector::MODE_RANK_MATH:
 				return 'Rank Math';
 			case SEO_Plugin_Detector::MODE_AIOSEO:
 				return 'All in One SEO';

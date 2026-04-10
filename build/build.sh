@@ -60,6 +60,7 @@ MENU_ICON="$(read_field menu_icon)"
 ROOT_ELEMENT_ID="$(read_field root_element_id)"
 OPTION_PREFIX="$(read_field option_prefix)"
 META_PREFIX="$(read_field meta_prefix)"
+DOCS_URL="$(read_field docs_url)"
 DESCRIPTION="$(read_field description)"
 WIDGET_URL="$(jq -r ".apps.\"$APP\".environments.\"$ENV\"" "$APPS_JSON")"
 CONST_PREFIX="$(echo "$OPTION_PREFIX" | tr '[:lower:]' '[:upper:]')"
@@ -95,6 +96,7 @@ substitute() {
         -e "s|{{APP_ROOT_ELEMENT_ID}}|$ROOT_ELEMENT_ID|g" \
         -e "s|{{APP_OPTION_PREFIX}}|$OPTION_PREFIX|g" \
         -e "s|{{APP_META_PREFIX}}|$META_PREFIX|g" \
+        -e "s|{{APP_DOCS_URL}}|$DOCS_URL|g" \
         -e "s|{{APP_DESCRIPTION}}|$DESCRIPTION|g" \
         -e "s|{{APP_WIDGET_URL}}|$WIDGET_URL|g" \
         -e "s|{{APP_CONST_PREFIX}}|$CONST_PREFIX|g" \
