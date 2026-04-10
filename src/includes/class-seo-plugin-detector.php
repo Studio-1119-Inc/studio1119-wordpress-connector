@@ -53,4 +53,27 @@ class SEO_Plugin_Detector {
 	public static function is_standalone() {
 		return self::MODE_STANDALONE === self::detect();
 	}
+
+	/**
+	 * Return the version string of the detected SEO plugin, if available.
+	 *
+	 * Used by the admin status portal to show reviewers concrete proof that
+	 * the connector is actually talking to the host SEO plugin — not just
+	 * linking out to an external service.
+	 *
+	 * @return string Version string, or empty string if no SEO plugin detected.
+	 */
+	public static function get_version() {
+		$mode = self::detect();
+		switch ( $mode ) {
+			case self::MODE_YOAST:
+				return defined( 'WPSEO_VERSION' ) ? (string) WPSEO_VERSION : '';
+			case self::MODE_RANK_MATH:
+				return defined( 'RANK_MATH_VERSION' ) ? (string) RANK_MATH_VERSION : '';
+			case self::MODE_AIOSEO:
+				return defined( 'AIOSEO_VERSION' ) ? (string) AIOSEO_VERSION : '';
+			default:
+				return '';
+		}
+	}
 }

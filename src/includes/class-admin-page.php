@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Admin_Page {
 
-	const CONNECTED_OPTION_SUFFIX     = '_connected';
+	const CONNECTED_OPTION_SUFFIX      = '_connected';
 	const CONNECTED_USER_OPTION_SUFFIX = '_connected_user';
 
 	/**
@@ -175,20 +175,28 @@ class Admin_Page {
 	 * @return void
 	 */
 	public static function render() {
-		$menu_title  = Plugin::const_value( 'MENU_TITLE' );
-		$menu_title  = $menu_title ? $menu_title : 'Studio 1119';
-		$widget_url  = Plugin::const_value( 'WIDGET_URL' );
-		$version     = Plugin::const_value( 'VERSION' );
-		$version     = $version ? $version : '0.0.0';
-		$mode        = Plugin::get_detected_mode();
-		$mode_label  = self::mode_display_name( $mode );
-		$connected   = self::is_connected();
-		$user_label  = self::connected_user_label();
+		$menu_title   = Plugin::const_value( 'MENU_TITLE' );
+		$menu_title   = $menu_title ? $menu_title : 'Studio 1119';
+		$widget_url   = Plugin::const_value( 'WIDGET_URL' );
+		$version      = Plugin::const_value( 'VERSION' );
+		$version      = $version ? $version : '0.0.0';
+		$mode         = Plugin::get_detected_mode();
+		$mode_label   = self::mode_display_name( $mode );
+		$mode_version = SEO_Plugin_Detector::get_version();
+		$connected    = self::is_connected();
+		$user_label   = self::connected_user_label();
 
 		// Count WooCommerce products.
 		$product_count = 0;
 		if ( function_exists( 'wc_get_products' ) ) {
-			$product_count = count( wc_get_products( array( 'limit' => -1, 'return' => 'ids' ) ) );
+			$product_count = count(
+				wc_get_products(
+					array(
+						'limit'  => -1,
+						'return' => 'ids',
+					)
+				)
+			);
 		}
 
 		// Build SSO dashboard URL: the /api/woocommerce/load endpoint verifies a
@@ -198,10 +206,12 @@ class Admin_Page {
 		if ( $connected && $widget_url ) {
 			$widget_token  = Widget_Auth::generate_token();
 			$site_url      = get_site_url();
-			$dashboard_url = trailingslashit( $widget_url ) . 'api/woocommerce/load?' . http_build_query( array(
-				'siteUrl' => $site_url,
-				'token'   => $widget_token,
-			) );
+			$dashboard_url = trailingslashit( $widget_url ) . 'api/woocommerce/load?' . http_build_query(
+				array(
+					'siteUrl' => $site_url,
+					'token'   => $widget_token,
+				)
+			);
 		} else {
 			$dashboard_url = $widget_url ? trailingslashit( $widget_url ) : '#';
 		}
@@ -209,10 +219,12 @@ class Admin_Page {
 		<div class="wrap woocommerce">
 			<h1><?php echo esc_html( $menu_title ); ?> optimization dashboard</h1>
 
+			<?php self::render_integration_card( $mode, $mode_label, $mode_version, $menu_title ); ?>
+
 			<?php if ( ! $connected ) : ?>
-				<?php self::render_connect_state( $menu_title, $widget_url, $mode_label, $product_count, $version ); ?>
+				<?php self::render_connect_state( $menu_title, $widget_url, $product_count, $version ); ?>
 			<?php else : ?>
-				<?php self::render_connected_state( $menu_title, $dashboard_url, $user_label, $mode_label, $product_count, $version, $widget_url ); ?>
+				<?php self::render_connected_state( $menu_title, $dashboard_url, $user_label, $product_count, $version, $widget_url ); ?>
 			<?php endif; ?>
 		</div>
 		<?php
@@ -223,22 +235,23 @@ class Admin_Page {
 	 *
 	 * @param string $menu_title    App display name.
 	 * @param string $widget_url    Backend URL.
-	 * @param string $mode_label    Detected SEO mode label.
 	 * @param int    $product_count Number of WC products.
 	 * @param string $version       Plugin version.
 	 * @return void
 	 */
-	private static function render_connect_state( $menu_title, $widget_url, $mode_label, $product_count, $version ) {
-		$prefix    = Plugin::const_value( 'OPTION_PREFIX' );
+	private static function render_connect_state( $menu_title, $widget_url, $product_count, $version ) {
+		$prefix     = Plugin::const_value( 'OPTION_PREFIX' );
 		$return_url = admin_url( 'admin.php?page=' . self::page_slug() . '&' . $prefix . '_connected=1' );
 
 		// Build the OAuth initiation URL on our SaaS backend.
-		$site_url  = get_site_url();
-		$auth_url  = $widget_url
-			? trailingslashit( $widget_url ) . 'api/woocommerce/auth?' . http_build_query( array(
-				'site_url'   => $site_url,
-				'return_url' => $return_url,
-			) )
+		$site_url = get_site_url();
+		$auth_url = $widget_url
+			? trailingslashit( $widget_url ) . 'api/woocommerce/auth?' . http_build_query(
+				array(
+					'site_url'   => $site_url,
+					'return_url' => $return_url,
+				)
+			)
 			: '#';
 		?>
 		<div class="card" style="max-width: 680px; margin-top: 20px;">
@@ -259,10 +272,6 @@ class Admin_Page {
 			<table class="widefat fixed striped" style="margin: 20px 0;">
 				<tbody>
 					<tr>
-						<td><strong><?php esc_html_e( 'SEO plugin mode', '{{APP_TEXT_DOMAIN}}' ); ?></strong></td>
-						<td><?php echo esc_html( $mode_label ); ?></td>
-					</tr>
-					<tr>
 						<td><strong><?php esc_html_e( 'Products', '{{APP_TEXT_DOMAIN}}' ); ?></strong></td>
 						<td><?php echo esc_html( number_format_i18n( $product_count ) ); ?></td>
 					</tr>
@@ -275,8 +284,8 @@ class Admin_Page {
 
 			<p>
 				<a href="<?php echo esc_url( $auth_url ); ?>"
-				   class="button button-primary button-hero"
-				   aria-label="<?php printf( esc_attr__( 'Connect to %s via WooCommerce authorization', '{{APP_TEXT_DOMAIN}}' ), esc_attr( $menu_title ) ); ?>">
+					class="button button-primary button-hero"
+					aria-label="<?php /* translators: %s: app name */ printf( esc_attr__( 'Connect to %s via WooCommerce authorization', '{{APP_TEXT_DOMAIN}}' ), esc_attr( $menu_title ) ); ?>">
 					<?php
 					printf(
 						/* translators: %s: app name */
@@ -305,13 +314,12 @@ class Admin_Page {
 	 * @param string $menu_title    App display name.
 	 * @param string $dashboard_url External dashboard URL.
 	 * @param string $user_label    Connected account label.
-	 * @param string $mode_label    Detected SEO mode label.
 	 * @param int    $product_count Number of WC products.
 	 * @param string $version       Plugin version.
 	 * @param string $widget_url    Backend URL.
 	 * @return void
 	 */
-	private static function render_connected_state( $menu_title, $dashboard_url, $user_label, $mode_label, $product_count, $version, $widget_url ) {
+	private static function render_connected_state( $menu_title, $dashboard_url, $user_label, $product_count, $version, $widget_url ) {
 		$connected_label = $user_label ? $user_label : get_bloginfo( 'name' );
 		?>
 		<div class="card" style="max-width: 680px; margin-top: 20px;">
@@ -332,10 +340,6 @@ class Admin_Page {
 						<td><?php echo esc_html( $connected_label ); ?></td>
 					</tr>
 					<tr>
-						<td><strong><?php esc_html_e( 'SEO plugin mode', '{{APP_TEXT_DOMAIN}}' ); ?></strong></td>
-						<td><?php echo esc_html( $mode_label ); ?></td>
-					</tr>
-					<tr>
 						<td><strong><?php esc_html_e( 'Products', '{{APP_TEXT_DOMAIN}}' ); ?></strong></td>
 						<td><?php echo esc_html( number_format_i18n( $product_count ) ); ?></td>
 					</tr>
@@ -348,10 +352,10 @@ class Admin_Page {
 
 			<p>
 				<a href="<?php echo esc_url( $dashboard_url ); ?>"
-				   class="button button-primary button-hero"
-				   target="_blank"
-				   rel="noopener noreferrer"
-				   aria-label="<?php printf( esc_attr__( 'Launch %s dashboard in a new tab', '{{APP_TEXT_DOMAIN}}' ), esc_attr( $menu_title ) ); ?>">
+					class="button button-primary button-hero"
+					target="_blank"
+					rel="noopener noreferrer"
+					aria-label="<?php /* translators: %s: app name */ printf( esc_attr__( 'Launch %s dashboard in a new tab', '{{APP_TEXT_DOMAIN}}' ), esc_attr( $menu_title ) ); ?>">
 					<?php
 					printf(
 						/* translators: %s: app name */
@@ -371,6 +375,126 @@ class Admin_Page {
 				<?php esc_html_e( 'View documentation', '{{APP_TEXT_DOMAIN}}' ); ?>
 			</a>
 		</p>
+		<?php
+	}
+
+	/**
+	 * Render the prominent "SEO integration detected" card.
+	 *
+	 * Shown above the main portal card on both the connect and connected
+	 * states. This is the marketplace reviewer's "real value" proof — it
+	 * demonstrates that the connector is genuinely talking to the host
+	 * WordPress site's SEO plugin, not just linking out to an external
+	 * service.
+	 *
+	 * For Yoast/Rank Math/AIOSEO: shows the plugin name, detected version,
+	 * and the exact meta keys the connector writes optimized content into.
+	 *
+	 * For standalone mode: explains that the connector inserts meta tags
+	 * directly into the product page &lt;head&gt; via wp_head.
+	 *
+	 * @param string $mode         One of SEO_Plugin_Detector::MODE_* constants.
+	 * @param string $mode_label   Human-readable mode label.
+	 * @param string $mode_version Detected SEO plugin version (empty if unknown).
+	 * @param string $menu_title   App display name.
+	 * @return void
+	 */
+	private static function render_integration_card( $mode, $mode_label, $mode_version, $menu_title ) {
+		$is_standalone = SEO_Plugin_Detector::MODE_STANDALONE === $mode;
+
+		$headline_label = $mode_label;
+		if ( ! $is_standalone && $mode_version ) {
+			$headline_label .= ' ' . $mode_version;
+		}
+
+		// Collect the canonical field → meta key pairs for the detected mode.
+		$field_labels = array(
+			'page_title'       => __( 'Meta title', '{{APP_TEXT_DOMAIN}}' ),
+			'meta_description' => __( 'Meta description', '{{APP_TEXT_DOMAIN}}' ),
+			'og_title'         => __( 'Open Graph title', '{{APP_TEXT_DOMAIN}}' ),
+			'og_description'   => __( 'Open Graph description', '{{APP_TEXT_DOMAIN}}' ),
+			'meta_keywords'    => __( 'Focus keyphrase', '{{APP_TEXT_DOMAIN}}' ),
+		);
+
+		$field_rows = array();
+		foreach ( $field_labels as $field => $label ) {
+			$key = Field_Mapper::meta_key( $field, $mode );
+			if ( $key ) {
+				$field_rows[] = array(
+					'label' => $label,
+					'key'   => $key,
+				);
+			}
+		}
+
+		$border_color = $is_standalone ? '#dba617' : '#00a32a';
+		$icon         = $is_standalone ? '&#9888;' : '&#10004;';
+		?>
+		<div class="card" style="max-width: 680px; margin-top: 20px; border-left: 4px solid <?php echo esc_attr( $border_color ); ?>;">
+			<h2 style="margin-top: 0;">
+				<span aria-hidden="true" style="color: <?php echo esc_attr( $border_color ); ?>;"><?php echo $icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static HTML entity constant. ?></span>
+				<?php
+				if ( $is_standalone ) {
+					esc_html_e( 'No SEO plugin detected', '{{APP_TEXT_DOMAIN}}' );
+				} else {
+					printf(
+						/* translators: %s: SEO plugin name and version, e.g. "Yoast SEO 22.3" */
+						esc_html__( 'Active SEO plugin detected: %s', '{{APP_TEXT_DOMAIN}}' ),
+						esc_html( $headline_label )
+					);
+				}
+				?>
+			</h2>
+
+			<?php if ( $is_standalone ) : ?>
+				<p style="margin-bottom: 0;">
+					<?php
+					printf(
+						/* translators: %s: app name */
+						esc_html__( '%s runs in standalone mode on this site. Optimized meta titles, descriptions, and Open Graph tags are stored in your WordPress database and inserted directly into each product page\'s &lt;head&gt; element via the standard wp_head action. All optimized content is owned by your store and survives plugin deactivation.', '{{APP_TEXT_DOMAIN}}' ),
+						esc_html( $menu_title )
+					);
+					?>
+				</p>
+			<?php else : ?>
+				<p>
+					<?php
+					printf(
+						/* translators: %1$s: app name, %2$s: SEO plugin label */
+						esc_html__( '%1$s is talking to %2$s through the native WordPress REST API. Optimized content generated in the cloud is written back into your local WordPress database — directly into the meta keys your SEO plugin already reads.', '{{APP_TEXT_DOMAIN}}' ),
+						esc_html( $menu_title ),
+						esc_html( $mode_label )
+					);
+					?>
+				</p>
+
+				<?php if ( ! empty( $field_rows ) ) : ?>
+					<p style="margin-bottom: 6px;">
+						<strong><?php esc_html_e( 'Fields written by the connector:', '{{APP_TEXT_DOMAIN}}' ); ?></strong>
+					</p>
+					<table class="widefat fixed striped" style="margin-bottom: 12px;">
+						<thead>
+							<tr>
+								<th style="width: 45%;"><?php esc_html_e( 'Field', '{{APP_TEXT_DOMAIN}}' ); ?></th>
+								<th><?php esc_html_e( 'WordPress meta key', '{{APP_TEXT_DOMAIN}}' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $field_rows as $row ) : ?>
+								<tr>
+									<td><?php echo esc_html( $row['label'] ); ?></td>
+									<td><code><?php echo esc_html( $row['key'] ); ?></code></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				<?php endif; ?>
+
+				<p class="description" style="margin-bottom: 0;">
+					<?php esc_html_e( 'All optimized content is stored locally in your WordPress database. Your SEO value remains intact even if this plugin is deactivated.', '{{APP_TEXT_DOMAIN}}' ); ?>
+				</p>
+			<?php endif; ?>
+		</div>
 		<?php
 	}
 

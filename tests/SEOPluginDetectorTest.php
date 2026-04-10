@@ -69,4 +69,16 @@ class SEOPluginDetectorTest extends TestCase {
 		// Without any SEO plugin loaded, should return true.
 		$this->assertTrue( SEO_Plugin_Detector::is_standalone() );
 	}
+
+	/**
+	 * Test that get_version returns an empty string when no SEO plugin is detected.
+	 *
+	 * In the test environment, none of the SEO plugin version constants are
+	 * defined, so detect() returns standalone and get_version() should return ''.
+	 *
+	 * @return void
+	 */
+	public function test_get_version_returns_empty_string_in_standalone_mode(): void {
+		$this->assertSame( '', SEO_Plugin_Detector::get_version() );
+	}
 }
