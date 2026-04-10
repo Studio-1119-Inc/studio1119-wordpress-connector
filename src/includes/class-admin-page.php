@@ -44,7 +44,66 @@ class Admin_Page {
 	public static function register() {
 		add_action( 'admin_menu', array( __CLASS__, 'add_menu' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_oauth_return' ) );
+		add_action( 'admin_post_studio1119_launch_dashboard', array( __CLASS__, 'handle_launch_dashboard' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'standalone_mode_notice' ) );
+	}
+
+	/**
+	 * Handle "Launch Dashboard" form submissions.
+	 *
+	 * Generates a fresh one-time widget token at click time and redirects
+	 * to the SSO load endpoint on the SaaS backend. Generating the token
+	 * at click time — rather than baking it into the button's href at
+	 * admin page render time — means the 5-minute token TTL starts when
+	 * the merchant actually clicks. They can leave the admin page open
+	 * indefinitely (over lunch, overnight) without seeing "Your widget
+	 * session has expired" when they come back and click.
+	 *
+	 * @return void
+	 */
+	public static function handle_launch_dashboard() {
+		check_admin_referer( 'studio1119_launch_dashboard' );
+
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_die(
+				esc_html__( 'You do not have permission to launch the dashboard.', '{{APP_TEXT_DOMAIN}}' ),
+				'',
+				array( 'response' => 403 )
+			);
+		}
+
+		if ( ! self::is_connected() ) {
+			wp_safe_redirect( admin_url( 'admin.php?page=' . self::page_slug() ) );
+			exit;
+		}
+
+		$widget_url = Plugin::const_value( 'WIDGET_URL' );
+		if ( ! $widget_url ) {
+			wp_die(
+				esc_html__( 'Dashboard URL is not configured.', '{{APP_TEXT_DOMAIN}}' ),
+				'',
+				array( 'response' => 500 )
+			);
+		}
+
+		// Fresh token — created now, not at page render. TTL is 5 minutes
+		// measured from this moment, so the click → verify round trip
+		// always completes well inside the window.
+		$token         = Widget_Auth::generate_token();
+		$site_url      = get_site_url();
+		$dashboard_url = trailingslashit( $widget_url ) . 'api/woocommerce/load?' . http_build_query(
+			array(
+				'siteUrl' => $site_url,
+				'token'   => $token,
+			)
+		);
+
+		// External redirect to the SaaS host; wp_safe_redirect restricts
+		// to allowlisted hosts and would reject this. The URL is built
+		// entirely from server-side constants, so wp_redirect is safe.
+		// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
+		wp_redirect( $dashboard_url );
+		exit;
 	}
 
 	/**
@@ -199,22 +258,11 @@ class Admin_Page {
 			);
 		}
 
-		// Build SSO dashboard URL: the /api/woocommerce/load endpoint verifies a
-		// one-time token and creates a JWT session, dropping the merchant into
-		// the dashboard already authenticated. Without this, clicking "Launch
-		// Dashboard" would require the merchant to log in again.
-		if ( $connected && $widget_url ) {
-			$widget_token  = Widget_Auth::generate_token();
-			$site_url      = get_site_url();
-			$dashboard_url = trailingslashit( $widget_url ) . 'api/woocommerce/load?' . http_build_query(
-				array(
-					'siteUrl' => $site_url,
-					'token'   => $widget_token,
-				)
-			);
-		} else {
-			$dashboard_url = $widget_url ? trailingslashit( $widget_url ) : '#';
-		}
+		// NOTE: the dashboard URL is no longer built here. The "Launch
+		// Dashboard" button now POSTs to admin-post.php, where
+		// handle_launch_dashboard() generates a fresh one-time token at
+		// click time and redirects. This prevents the widget token from
+		// expiring while the admin page sits idle.
 		?>
 		<div class="wrap woocommerce">
 			<h1><?php echo esc_html( $menu_title ); ?> optimization dashboard</h1>
@@ -224,7 +272,7 @@ class Admin_Page {
 			<?php if ( ! $connected ) : ?>
 				<?php self::render_connect_state( $menu_title, $widget_url, $product_count, $version ); ?>
 			<?php else : ?>
-				<?php self::render_connected_state( $menu_title, $dashboard_url, $user_label, $product_count, $version, $widget_url ); ?>
+				<?php self::render_connected_state( $menu_title, $user_label, $product_count, $version ); ?>
 			<?php endif; ?>
 		</div>
 		<?php
@@ -311,15 +359,18 @@ class Admin_Page {
 	/**
 	 * Render the "connected" state with status summary and dashboard link.
 	 *
+	 * The "Launch Dashboard" control is a form POST rather than a direct
+	 * link so that the widget auth token is generated at click time by
+	 * handle_launch_dashboard() — avoiding the "session expired" error
+	 * that happens when the admin page sits open longer than the token TTL.
+	 *
 	 * @param string $menu_title    App display name.
-	 * @param string $dashboard_url External dashboard URL.
 	 * @param string $user_label    Connected account label.
 	 * @param int    $product_count Number of WC products.
 	 * @param string $version       Plugin version.
-	 * @param string $widget_url    Backend URL.
 	 * @return void
 	 */
-	private static function render_connected_state( $menu_title, $dashboard_url, $user_label, $product_count, $version, $widget_url ) {
+	private static function render_connected_state( $menu_title, $user_label, $product_count, $version ) {
 		$connected_label = $user_label ? $user_label : get_bloginfo( 'name' );
 		?>
 		<div class="card" style="max-width: 680px; margin-top: 20px;">
@@ -351,19 +402,24 @@ class Admin_Page {
 			</table>
 
 			<p>
-				<a href="<?php echo esc_url( $dashboard_url ); ?>"
-					class="button button-primary button-hero"
+				<form method="post"
+					action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
 					target="_blank"
-					rel="noopener noreferrer"
-					aria-label="<?php /* translators: %s: app name */ printf( esc_attr__( 'Launch %s dashboard in a new tab', '{{APP_TEXT_DOMAIN}}' ), esc_attr( $menu_title ) ); ?>">
-					<?php
-					printf(
-						/* translators: %s: app name */
-						esc_html__( 'Launch %s dashboard', '{{APP_TEXT_DOMAIN}}' ),
-						esc_html( $menu_title )
-					);
-					?>
-				</a>
+					style="display: inline;">
+					<?php wp_nonce_field( 'studio1119_launch_dashboard' ); ?>
+					<input type="hidden" name="action" value="studio1119_launch_dashboard">
+					<button type="submit"
+						class="button button-primary button-hero"
+						aria-label="<?php /* translators: %s: app name */ printf( esc_attr__( 'Launch %s dashboard in a new tab', '{{APP_TEXT_DOMAIN}}' ), esc_attr( $menu_title ) ); ?>">
+						<?php
+						printf(
+							/* translators: %s: app name */
+							esc_html__( 'Launch %s dashboard', '{{APP_TEXT_DOMAIN}}' ),
+							esc_html( $menu_title )
+						);
+						?>
+					</button>
+				</form>
 			</p>
 			<p class="description">
 				<?php esc_html_e( 'Manage SEO optimization, bulk operations, and billing on the external platform.', '{{APP_TEXT_DOMAIN}}' ); ?>
