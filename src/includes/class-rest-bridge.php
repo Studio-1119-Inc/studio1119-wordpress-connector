@@ -13,10 +13,10 @@
  *   GET  /seo/product/<id>
  *   POST /seo/product/<id>   body: { page_title?, meta_description?, og_title?, og_description?, meta_keywords? }
  *
- * @package Studio1119\Connector
+ * @package {{APP_NAMESPACE}}
  */
 
-namespace Studio1119\Connector;
+namespace {{APP_NAMESPACE}};
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -73,7 +73,7 @@ class Rest_Bridge {
 			'/verify-token',
 			array(
 				'methods'             => 'POST',
-				'permission_callback' => array( 'Studio1119\Connector\Widget_Auth', 'check_wc_auth' ),
+				'permission_callback' => array( '{{APP_NAMESPACE}}\Widget_Auth', 'check_wc_auth' ),
 				'callback'            => array( __CLASS__, 'verify_widget_token' ),
 			)
 		);

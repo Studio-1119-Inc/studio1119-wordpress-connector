@@ -8,10 +8,10 @@
  * token by calling back to this site's REST endpoint, ensuring only
  * authenticated WP admins can create widget sessions.
  *
- * @package Studio1119\Connector
+ * @package {{APP_NAMESPACE}}
  */
 
-namespace Studio1119\Connector;
+namespace {{APP_NAMESPACE}};
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

@@ -14,7 +14,7 @@
  * WC requires at least: 9.6
  * WC tested up to: 10.6.2
  *
- * @package Studio1119\Connector
+ * @package {{APP_NAMESPACE}}
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -42,10 +42,10 @@ require_once __DIR__ . '/includes/class-seo-meta-notifier.php';
 require_once __DIR__ . '/includes/class-taxonomy-notifier.php';
 require_once __DIR__ . '/includes/class-plugin.php';
 
-register_activation_hook( __FILE__, array( '\Studio1119\Connector\Plugin', 'activate' ) );
-register_deactivation_hook( __FILE__, array( '\Studio1119\Connector\Plugin', 'deactivate' ) );
+register_activation_hook( __FILE__, array( '\{{APP_NAMESPACE}}\Plugin', 'activate' ) );
+register_deactivation_hook( __FILE__, array( '\{{APP_NAMESPACE}}\Plugin', 'deactivate' ) );
 // Uninstall is handled by uninstall.php (preferred over register_uninstall_hook
 // for WooCommerce Marketplace compliance — includes WP_UNINSTALL_PLUGIN check
 // and multisite cleanup).
 
-add_action( 'plugins_loaded', array( '\Studio1119\Connector\Plugin', 'boot' ) );
+add_action( 'plugins_loaded', array( '\{{APP_NAMESPACE}}\Plugin', 'boot' ) );

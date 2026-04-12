@@ -6,7 +6,7 @@
  * (AI-generated SEO titles, descriptions, and alt text). Merchants retain
  * the value of the plugin even after uninstall.
  *
- * @package Studio1119\Connector
+ * @package {{APP_NAMESPACE}}
  */
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {

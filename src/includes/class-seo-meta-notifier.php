@@ -14,10 +14,10 @@
  * Multiple meta updates within a single request are batched and sent
  * as one notification per product on the `shutdown` hook.
  *
- * @package Studio1119\Connector
+ * @package {{APP_NAMESPACE}}
  */
 
-namespace Studio1119\Connector;
+namespace {{APP_NAMESPACE}};
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

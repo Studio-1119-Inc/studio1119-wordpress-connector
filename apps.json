@@ -3,6 +3,7 @@
     "cataseo": {
       "plugin_name": "CataSEO",
       "plugin_slug": "cataseo",
+      "namespace": "Studio1119\\CataSEO",
       "text_domain": "cataseo",
       "menu_title": "CataSEO",
       "menu_icon": "dashicons-chart-line",
@@ -21,6 +22,7 @@
     "cataseo-dev": {
       "plugin_name": "CataSEO (Dev)",
       "plugin_slug": "cataseo-dev",
+      "namespace": "Studio1119\\CataSEO",
       "text_domain": "cataseo",
       "menu_title": "CataSEO",
       "menu_icon": "dashicons-chart-line",
@@ -37,8 +39,9 @@
       }
     },
     "trusync": {
-      "plugin_name": "TruSync for WooCommerce",
-      "plugin_slug": "trusync-for-woocommerce",
+      "plugin_name": "TruSync",
+      "plugin_slug": "trusync",
+      "namespace": "Studio1119\\TruSync",
       "text_domain": "trusync",
       "menu_title": "TruSync",
       "menu_icon": "dashicons-update",
@@ -46,11 +49,11 @@
       "option_prefix": "trusync",
       "meta_prefix": "_trusync",
       "docs_url": "https://www.trusync.ai/docs/woo",
-      "description": "TruSync product and inventory synchronization for WooCommerce.",
+      "description": "Automatic order and inventory synchronization with QuickBooks Online.",
       "environments": {
         "production": "https://app.trusync.ai",
         "staging": "https://app-staging.trusync.ai",
-        "development": "https://trusync-dev.ngrok.app"
+        "development": "https://funny-ram-sought.ngrok-free.app"
       }
     }
   }

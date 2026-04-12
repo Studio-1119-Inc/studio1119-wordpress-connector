@@ -8,10 +8,10 @@
  * AIOSEO > standalone. This matches the order in which each plugin would
  * "win" the wp_head output race in practice.
  *
- * @package Studio1119\Connector
+ * @package {{APP_NAMESPACE}}
  */
 
-namespace Studio1119\Connector;
+namespace {{APP_NAMESPACE}};
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

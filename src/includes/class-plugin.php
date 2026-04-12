@@ -8,10 +8,10 @@
  * app-agnostic — adding a new app requires only an apps.json entry, no PHP
  * changes.
  *
- * @package Studio1119\Connector
+ * @package {{APP_NAMESPACE}}
  */
 
-namespace Studio1119\Connector;
+namespace {{APP_NAMESPACE}};
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -171,27 +171,16 @@ class Plugin {
 	}
 
 	/**
-	 * Discover the per-app constant prefix at runtime.
+	 * Return the per-app constant prefix.
 	 *
-	 * Scans user-defined constants for one ending in _VERSION that also has a
-	 * sibling _PLUGIN_FILE constant. The prefix is cached for the request.
+	 * Substituted at build time from apps.json (e.g. 'CATASEO', 'TRUSYNC').
+	 * Previous implementation scanned get_defined_constants() at runtime, but
+	 * that breaks when multiple Studio 1119 plugins are active on the same site
+	 * — the scan returns whichever prefix comes first alphabetically.
 	 *
-	 * @return string The constant prefix (e.g. 'CATASEO'), or empty string if not found.
+	 * @return string The constant prefix (e.g. 'CATASEO', 'TRUSYNC').
 	 */
 	public static function const_prefix() {
-		static $cached = null;
-		if ( null !== $cached ) {
-			return $cached;
-		}
-		$user_constants = get_defined_constants( true );
-		$user_constants = isset( $user_constants['user'] ) ? $user_constants['user'] : array();
-		foreach ( $user_constants as $name => $value ) {
-			if ( '_VERSION' === substr( $name, -8 ) && defined( substr( $name, 0, -8 ) . '_PLUGIN_FILE' ) ) {
-				$cached = substr( $name, 0, -8 );
-				return $cached;
-			}
-		}
-		$cached = '';
-		return $cached;
+		return '{{APP_CONST_PREFIX}}';
 	}
 }

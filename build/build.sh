@@ -54,6 +54,10 @@ read_field() {
 
 PLUGIN_NAME="$(read_field plugin_name)"
 PLUGIN_SLUG="$(read_field plugin_slug)"
+# Backslashes in the namespace must be doubled for sed replacement strings,
+# where a single `\` is an escape character.
+NAMESPACE_RAW="$(read_field namespace)"
+NAMESPACE="${NAMESPACE_RAW//\\/\\\\}"
 TEXT_DOMAIN="$(read_field text_domain)"
 MENU_TITLE="$(read_field menu_title)"
 MENU_ICON="$(read_field menu_icon)"
@@ -89,6 +93,7 @@ cp "$REPO_ROOT/LICENSE" "$STAGING_DIR/$PLUGIN_SLUG/"
 substitute() {
     local file="$1"
     sed \
+        -e "s|{{APP_NAMESPACE}}|$NAMESPACE|g" \
         -e "s|{{APP_PLUGIN_NAME}}|$PLUGIN_NAME|g" \
         -e "s|{{APP_TEXT_DOMAIN}}|$TEXT_DOMAIN|g" \
         -e "s|{{APP_MENU_TITLE}}|$MENU_TITLE|g" \
