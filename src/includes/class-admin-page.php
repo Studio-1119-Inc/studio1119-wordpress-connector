@@ -174,7 +174,11 @@ class Admin_Page {
 	 * @return void
 	 */
 	public static function standalone_mode_notice() {
-		if ( SEO_Plugin_Detector::MODE_STANDALONE !== Plugin::get_detected_mode() ) {
+		// Only relevant for SEO apps — sync apps don't write SEO meta.
+		if ( 'seo' !== Plugin::const_value( 'APP_TYPE' ) ) {
+			return;
+		}
+		if ( 'standalone' !== Plugin::get_detected_mode() ) {
 			return;
 		}
 
@@ -189,7 +193,7 @@ class Admin_Page {
 		$admin_url  = admin_url( "admin.php?page={$slug}" );
 
 		$post_id   = get_the_ID();
-		$has_title = $post_id ? get_post_meta( $post_id, Field_Mapper::meta_key( 'page_title', SEO_Plugin_Detector::MODE_STANDALONE ), true ) : '';
+		$has_title = $post_id ? get_post_meta( $post_id, Field_Mapper::meta_key( 'page_title', 'standalone' ), true ) : '';
 
 		if ( $has_title ) {
 			echo '<div class="notice notice-success"><p>';
@@ -239,9 +243,10 @@ class Admin_Page {
 		$widget_url   = Plugin::const_value( 'WIDGET_URL' );
 		$version      = Plugin::const_value( 'VERSION' );
 		$version      = $version ? $version : '0.0.0';
-		$mode         = Plugin::get_detected_mode();
-		$mode_label   = self::mode_display_name( $mode );
-		$mode_version = SEO_Plugin_Detector::get_version();
+		$is_seo       = 'seo' === Plugin::const_value( 'APP_TYPE' );
+		$mode         = $is_seo ? Plugin::get_detected_mode() : '';
+		$mode_label   = $is_seo ? self::mode_display_name( $mode ) : '';
+		$mode_version = $is_seo && class_exists( __NAMESPACE__ . '\SEO_Plugin_Detector' ) ? SEO_Plugin_Detector::get_version() : '';
 		$connected    = self::is_connected();
 		$user_label   = self::connected_user_label();
 
@@ -265,9 +270,11 @@ class Admin_Page {
 		// expiring while the admin page sits idle.
 		?>
 		<div class="wrap woocommerce">
-			<h1><?php echo esc_html( $menu_title ); ?> optimization dashboard</h1>
+			<h1><?php echo esc_html( $menu_title ); ?> dashboard</h1>
 
-			<?php self::render_integration_card( $mode, $mode_label, $mode_version, $menu_title ); ?>
+			<?php if ( 'seo' === Plugin::const_value( 'APP_TYPE' ) ) : ?>
+				<?php self::render_integration_card( $mode, $mode_label, $mode_version, $menu_title ); ?>
+			<?php endif; ?>
 
 			<?php if ( ! $connected ) : ?>
 				<?php self::render_connect_state( $menu_title, $widget_url, $product_count, $version ); ?>
@@ -304,18 +311,10 @@ class Admin_Page {
 		?>
 		<div class="card" style="max-width: 680px; margin-top: 20px;">
 			<h2 style="margin-top: 0;">
-				<?php esc_html_e( 'Connect your store', '{{APP_TEXT_DOMAIN}}' ); ?>
+				<?php echo esc_html( '{{APP_CONNECT_HEADING}}' ); ?>
 			</h2>
 
-			<p>
-				<?php
-				printf(
-					/* translators: %s: app name */
-					esc_html__( 'Connect your WooCommerce store to %s to start optimizing your product SEO with AI.', '{{APP_TEXT_DOMAIN}}' ),
-					esc_html( $menu_title )
-				);
-				?>
-			</p>
+			<p><?php echo esc_html( '{{APP_CONNECT_DESCRIPTION}}' ); ?></p>
 
 			<table class="widefat fixed striped" style="margin: 20px 0;">
 				<tbody>
@@ -344,7 +343,7 @@ class Admin_Page {
 				</a>
 			</p>
 			<p class="description">
-				<?php esc_html_e( 'You will be asked to approve read and write access to your products. This is required for SEO optimization.', '{{APP_TEXT_DOMAIN}}' ); ?>
+				<?php echo esc_html( '{{APP_CONNECT_DISCLAIMER}}' ); ?>
 			</p>
 		</div>
 
@@ -422,7 +421,7 @@ class Admin_Page {
 				</form>
 			</p>
 			<p class="description">
-				<?php esc_html_e( 'Manage SEO optimization, bulk operations, and billing on the external platform.', '{{APP_TEXT_DOMAIN}}' ); ?>
+				<?php echo esc_html( '{{APP_CONNECTED_DESCRIPTION}}' ); ?>
 			</p>
 		</div>
 
@@ -456,7 +455,7 @@ class Admin_Page {
 	 * @return void
 	 */
 	private static function render_integration_card( $mode, $mode_label, $mode_version, $menu_title ) {
-		$is_standalone = SEO_Plugin_Detector::MODE_STANDALONE === $mode;
+		$is_standalone = 'standalone' === $mode;
 
 		$headline_label = $mode_label;
 		if ( ! $is_standalone && $mode_version ) {
@@ -561,14 +560,16 @@ class Admin_Page {
 	 * @return string
 	 */
 	private static function mode_display_name( $mode ) {
+		// Use string literals instead of class constants so this method can
+		// be parsed even when SEO_Plugin_Detector is not loaded (sync apps).
 		switch ( $mode ) {
-			case SEO_Plugin_Detector::MODE_YOAST:
+			case 'yoast':
 				return 'Yoast SEO';
-			case SEO_Plugin_Detector::MODE_RANK_MATH:
+			case 'rank_math':
 				return 'Rank Math';
-			case SEO_Plugin_Detector::MODE_AIOSEO:
+			case 'aioseo':
 				return 'All in One SEO';
-			case SEO_Plugin_Detector::MODE_STANDALONE:
+			case 'standalone':
 				return 'Standalone (no SEO plugin)';
 			default:
 				return ucfirst( $mode );

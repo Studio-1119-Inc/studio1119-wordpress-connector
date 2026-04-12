@@ -31,16 +31,23 @@ define( '{{APP_CONST_PREFIX}}_META_PREFIX', '{{APP_META_PREFIX}}' );
 define( '{{APP_CONST_PREFIX}}_TEXT_DOMAIN', '{{APP_TEXT_DOMAIN}}' );
 define( '{{APP_CONST_PREFIX}}_MENU_TITLE', '{{APP_MENU_TITLE}}' );
 define( '{{APP_CONST_PREFIX}}_MENU_ICON', '{{APP_MENU_ICON}}' );
+define( '{{APP_CONST_PREFIX}}_APP_TYPE', '{{APP_TYPE}}' );
 
-require_once __DIR__ . '/includes/class-seo-plugin-detector.php';
-require_once __DIR__ . '/includes/class-field-mapper.php';
-require_once __DIR__ . '/includes/class-standalone-head.php';
+// Core subsystems — always loaded.
 require_once __DIR__ . '/includes/class-widget-auth.php';
 require_once __DIR__ . '/includes/class-admin-page.php';
 require_once __DIR__ . '/includes/class-rest-bridge.php';
-require_once __DIR__ . '/includes/class-seo-meta-notifier.php';
-require_once __DIR__ . '/includes/class-taxonomy-notifier.php';
 require_once __DIR__ . '/includes/class-plugin.php';
+
+// SEO subsystems — only loaded for SEO-type apps. Sync apps (e.g. TruSync)
+// don't detect SEO plugins, write meta keys, or inject <head> tags.
+if ( 'seo' === {{APP_CONST_PREFIX}}_APP_TYPE ) {
+	require_once __DIR__ . '/includes/class-seo-plugin-detector.php';
+	require_once __DIR__ . '/includes/class-field-mapper.php';
+	require_once __DIR__ . '/includes/class-standalone-head.php';
+	require_once __DIR__ . '/includes/class-seo-meta-notifier.php';
+	require_once __DIR__ . '/includes/class-taxonomy-notifier.php';
+}
 
 register_activation_hook( __FILE__, array( '\{{APP_NAMESPACE}}\Plugin', 'activate' ) );
 register_deactivation_hook( __FILE__, array( '\{{APP_NAMESPACE}}\Plugin', 'deactivate' ) );

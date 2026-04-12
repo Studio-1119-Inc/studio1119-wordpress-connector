@@ -58,6 +58,7 @@ PLUGIN_SLUG="$(read_field plugin_slug)"
 # where a single `\` is an escape character.
 NAMESPACE_RAW="$(read_field namespace)"
 NAMESPACE="${NAMESPACE_RAW//\\/\\\\}"
+APP_TYPE="$(read_field app_type)"
 TEXT_DOMAIN="$(read_field text_domain)"
 MENU_TITLE="$(read_field menu_title)"
 MENU_ICON="$(read_field menu_icon)"
@@ -66,6 +67,10 @@ OPTION_PREFIX="$(read_field option_prefix)"
 META_PREFIX="$(read_field meta_prefix)"
 DOCS_URL="$(read_field docs_url)"
 DESCRIPTION="$(read_field description)"
+CONNECT_HEADING="$(read_field connect_heading)"
+CONNECT_DESCRIPTION="$(read_field connect_description)"
+CONNECT_DISCLAIMER="$(read_field connect_disclaimer)"
+CONNECTED_DESCRIPTION="$(read_field connected_description)"
 WIDGET_URL="$(jq -r ".apps.\"$APP\".environments.\"$ENV\"" "$APPS_JSON")"
 CONST_PREFIX="$(echo "$OPTION_PREFIX" | tr '[:lower:]' '[:upper:]')"
 
@@ -94,6 +99,7 @@ substitute() {
     local file="$1"
     sed \
         -e "s|{{APP_NAMESPACE}}|$NAMESPACE|g" \
+        -e "s|{{APP_TYPE}}|$APP_TYPE|g" \
         -e "s|{{APP_PLUGIN_NAME}}|$PLUGIN_NAME|g" \
         -e "s|{{APP_TEXT_DOMAIN}}|$TEXT_DOMAIN|g" \
         -e "s|{{APP_MENU_TITLE}}|$MENU_TITLE|g" \
@@ -103,6 +109,10 @@ substitute() {
         -e "s|{{APP_META_PREFIX}}|$META_PREFIX|g" \
         -e "s|{{APP_DOCS_URL}}|$DOCS_URL|g" \
         -e "s|{{APP_DESCRIPTION}}|$DESCRIPTION|g" \
+        -e "s|{{APP_CONNECT_HEADING}}|$CONNECT_HEADING|g" \
+        -e "s|{{APP_CONNECT_DESCRIPTION}}|$CONNECT_DESCRIPTION|g" \
+        -e "s|{{APP_CONNECT_DISCLAIMER}}|$CONNECT_DISCLAIMER|g" \
+        -e "s|{{APP_CONNECTED_DESCRIPTION}}|$CONNECTED_DESCRIPTION|g" \
         -e "s|{{APP_WIDGET_URL}}|$WIDGET_URL|g" \
         -e "s|{{APP_CONST_PREFIX}}|$CONST_PREFIX|g" \
         -e "s|{{APP_VERSION}}|$VERSION|g" \

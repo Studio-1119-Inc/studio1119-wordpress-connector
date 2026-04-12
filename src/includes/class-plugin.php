@@ -42,7 +42,10 @@ class Plugin {
 		add_action( 'before_woocommerce_init', array( __CLASS__, 'declare_hpos_compatibility' ) );
 
 		// Re-detect active SEO plugin on every admin page load so mode is always current.
-		add_action( 'admin_init', array( __CLASS__, 'refresh_detected_mode' ) );
+		// Only for SEO-type apps — sync apps don't use SEO detection.
+		if ( 'seo' === self::const_value( 'APP_TYPE' ) ) {
+			add_action( 'admin_init', array( __CLASS__, 'refresh_detected_mode' ) );
+		}
 
 		// Tell WooCommerce to run its REST authentication (consumer key/secret)
 		// for our custom namespace. Without this, WC only authenticates requests
@@ -74,9 +77,13 @@ class Plugin {
 
 		Admin_Page::register();
 		Rest_Bridge::register();
-		Standalone_Head::register();
-		SEO_Meta_Notifier::register();
-		Taxonomy_Notifier::register();
+
+		// SEO subsystems — only for SEO-type apps.
+		if ( 'seo' === self::const_value( 'APP_TYPE' ) ) {
+			Standalone_Head::register();
+			SEO_Meta_Notifier::register();
+			Taxonomy_Notifier::register();
+		}
 	}
 
 	/**
@@ -99,7 +106,9 @@ class Plugin {
 	 * @return void
 	 */
 	public static function activate() {
-		self::refresh_detected_mode();
+		if ( 'seo' === self::const_value( 'APP_TYPE' ) ) {
+			self::refresh_detected_mode();
+		}
 	}
 
 	/**
