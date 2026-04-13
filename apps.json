@@ -67,7 +67,7 @@
       "connected_description": "Manage order sync, inventory, and billing on the external platform.",
       "environments": {
         "production": "https://app.trusync.ai",
-        "staging": "https://app-staging.trusync.ai",
+        "staging": "https://staging.trusync.ai",
         "development": "https://funny-ram-sought.ngrok-free.app"
       }
     }
