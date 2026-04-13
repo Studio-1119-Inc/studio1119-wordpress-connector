@@ -95,6 +95,15 @@ mv "$STAGING_DIR/$PLUGIN_SLUG/plugin.php" "$STAGING_DIR/$PLUGIN_SLUG/$PLUGIN_SLU
 # Ship the license alongside the plugin.
 cp "$REPO_ROOT/LICENSE" "$STAGING_DIR/$PLUGIN_SLUG/"
 
+# Per-app changelog — each app maintains its own history in changelogs/<app>.txt.
+# Falls back to src/changelog.txt (token-substituted) if no per-app file exists.
+APP_CHANGELOG="$REPO_ROOT/changelogs/$APP.txt"
+if [ -f "$APP_CHANGELOG" ]; then
+    cp "$APP_CHANGELOG" "$STAGING_DIR/$PLUGIN_SLUG/changelog.txt"
+else
+    echo "warning: no per-app changelog at $APP_CHANGELOG, using src/changelog.txt" >&2
+fi
+
 substitute() {
     local file="$1"
     sed \

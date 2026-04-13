@@ -1,0 +1,16 @@
+*** TruSync Changelog ***
+
+2026-04-13 - version 0.1.0
+* New - Initial release
+* Added - Automatic order and inventory synchronization with QuickBooks Online
+* Added - Real-time order sync via WooCommerce webhooks
+* Added - Bidirectional inventory sync (QBO to WooCommerce)
+* Added - Payment method mapping to QuickBooks deposit accounts
+* Added - Sales tax jurisdiction mapping from order tax lines
+* Added - Product catalog sync with auto-matching to QuickBooks items
+* Added - Historical order backfill
+* Added - Native WooCommerce admin page with connection status
+* Added - OAuth connection flow via WooCommerce REST API
+* Added - Secure SSO launch to external dashboard
+* Added - HPOS (High-Performance Order Storage) compatible
+* Added - Full cleanup on uninstall (options, webhooks, API keys)

@@ -1,0 +1,4 @@
+*** CataSEO (Dev) Changelog ***
+
+2026-04-08 - version 0.1.0
+* New - Initial release (development build)

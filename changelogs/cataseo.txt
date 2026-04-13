@@ -1,0 +1,13 @@
+*** CataSEO Changelog ***
+
+2026-04-08 - version 0.1.0
+* New - Initial release
+* Added - AI-powered product SEO optimization
+* Added - Express mode for individual product optimization
+* Added - Batch optimization for entire catalogs
+* Added - Category page SEO optimization
+* Added - Compatible with Yoast SEO, Rank Math, All in One SEO, and standalone
+* Added - Native WooCommerce admin page with connection status
+* Added - OAuth connection flow via WooCommerce REST API
+* Added - Secure SSO launch to external dashboard
+* Added - HPOS (High-Performance Order Storage) compatible
