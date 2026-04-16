@@ -11,7 +11,8 @@
  *   - meta_description
  *   - og_title
  *   - og_description
- *   - meta_keywords   (Yoast only; dropped for other modes)
+ *   - meta_keywords   (Yoast: literal keywords list; other modes: mapped to the
+ *                      focus-keyphrase slot — see CLAUDE.md for the full mapping.)
  *
  * @package {{APP_NAMESPACE}}
  */

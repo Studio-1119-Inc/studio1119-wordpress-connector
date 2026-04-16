@@ -282,7 +282,7 @@ class Rest_Bridge {
 				}
 				$key = Field_Mapper::meta_key( $field, $mode );
 				if ( ! $key ) {
-					continue; // Field not storable in this mode (e.g. meta_keywords outside Yoast).
+					continue; // Canonical field has no mapping for this mode.
 				}
 				$safe = is_array( $value ) ? implode( ', ', array_map( 'sanitize_text_field', $value ) ) : sanitize_text_field( (string) $value );
 				update_post_meta( $post_id, $key, $safe );

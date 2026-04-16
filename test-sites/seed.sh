@@ -168,7 +168,8 @@ seed_site() {
                 >/dev/null 2>&1 || true
         done
 
-        # Yoast-only: meta_keywords as comma-joined string.
+        # Only Yoast stores a literal keywords list; other modes map the
+        # meta_keywords canonical field to their focus-keyphrase slot.
         if [ "$slug" = "yoast" ]; then
             local kw
             kw="$(echo "$row" | jq -r '.seo.metaKeywords | join(", ") // empty')"
