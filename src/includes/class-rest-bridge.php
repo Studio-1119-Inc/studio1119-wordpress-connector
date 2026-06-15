@@ -265,7 +265,8 @@ class Rest_Bridge {
 				if ( ! $key ) {
 					continue; // Field not storable in this mode (e.g. meta_keywords outside Yoast).
 				}
-				update_post_meta( $post_id, $key, sanitize_text_field( (string) $value ) );
+				$safe = is_array( $value ) ? implode( ', ', array_map( 'sanitize_text_field', $value ) ) : sanitize_text_field( (string) $value );
+				update_post_meta( $post_id, $key, $safe );
 				$updated[ $field ] = $key;
 			}
 		}
