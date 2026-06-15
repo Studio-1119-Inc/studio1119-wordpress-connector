@@ -1,5 +1,5 @@
 === {{APP_PLUGIN_NAME}} ===
-Contributors: studio1119
+Contributors: developstudio1119
 Tags: woocommerce, seo, ai, product descriptions, meta tags
 Requires at least: 6.4
 Tested up to: 6.9.4
