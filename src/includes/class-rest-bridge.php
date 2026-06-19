@@ -259,6 +259,7 @@ class Rest_Bridge {
 						'additional' => array(),
 					)
 				);
+
 				$updated['meta_keywords'] = 'keyphrases';
 			}
 			if ( ! empty( $data ) ) {
