@@ -32,8 +32,8 @@ jobs:
           unzip -q -o dist/cataseo-0.0.0-ci-production.zip -d dist/lint-check
           find dist/lint-check/ -name '*.php' -print0 | xargs -0 -n1 php -l
 
-      - name: PHPCS
-        run: phpcs
+      - name: PHPCS (built output)
+        run: phpcs --standard=phpcs.xml.dist dist/lint-check/cataseo/
 
   test:
     name: PHPUnit Tests
