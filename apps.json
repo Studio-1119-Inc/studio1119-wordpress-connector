@@ -20,7 +20,7 @@
       "environments": {
         "production": "https://app.cataseo.ai",
         "staging": "https://app-staging.cataseo.ai",
-        "development": "https://funny-ram-sought.ngrok-free.app",
+        "development": "https://gathering-gab-mollusk.ngrok-free.dev",
         "local": "http://localhost:3002"
       }
     },
@@ -44,7 +44,7 @@
       "environments": {
         "production": "https://app.cataseo.ai",
         "staging": "https://app-staging.cataseo.ai",
-        "development": "https://funny-ram-sought.ngrok-free.app",
+        "development": "https://gathering-gab-mollusk.ngrok-free.dev",
         "local": "http://localhost:3002"
       }
     },
@@ -68,7 +68,7 @@
       "environments": {
         "production": "https://app.trusync.ai",
         "staging": "https://staging.trusync.ai",
-        "development": "https://funny-ram-sought.ngrok-free.app"
+        "development": "https://gathering-gab-mollusk.ngrok-free.dev"
       }
     }
   }
