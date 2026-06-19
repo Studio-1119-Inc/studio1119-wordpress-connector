@@ -247,7 +247,8 @@ class Rest_Bridge {
 			// Handle keyphrases (focus keyword) — stored as JSON in AIOSEO.
 			$keywords = $request->get_param( 'meta_keywords' );
 			if ( null !== $keywords ) {
-				$keyphrase          = is_array( $keywords ) ? implode( ', ', $keywords ) : sanitize_text_field( (string) $keywords );
+				$keyphrase = is_array( $keywords ) ? implode( ', ', $keywords ) : sanitize_text_field( (string) $keywords );
+
 				$data['keyphrases'] = wp_json_encode(
 					array(
 						'focus'      => array(
@@ -363,8 +364,8 @@ class Rest_Bridge {
 			$wpdb->update( $table, $data, array( 'post_id' => $post_id ) );
 		} else {
 			$data['post_id'] = $post_id;
-			$data['created']  = current_time( 'mysql' );
-			$data['updated']  = current_time( 'mysql' );
+			$data['created'] = current_time( 'mysql' );
+			$data['updated'] = current_time( 'mysql' );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->insert( $table, $data );
 		}
