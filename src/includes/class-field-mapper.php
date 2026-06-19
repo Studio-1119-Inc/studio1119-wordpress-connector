@@ -86,7 +86,7 @@ class Field_Mapper {
 				'meta_description' => '_aioseo_description',
 				'og_title'         => '_aioseo_og_title',
 				'og_description'   => '_aioseo_og_description',
-				'meta_keywords'    => '_aioseo_keyphrases', // Handled specially in Rest_Bridge
+				'meta_keywords'    => '_aioseo_keyphrases', // Handled specially in Rest_Bridge.
 			),
 			SEO_Plugin_Detector::MODE_STANDALONE => array(
 				'page_title'       => $standalone . '_title',

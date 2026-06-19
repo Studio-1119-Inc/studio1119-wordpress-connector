@@ -45,9 +45,10 @@ $cataseo_webhook_ids = $wpdb->get_col(
 );
 if ( ! empty( $cataseo_webhook_ids ) ) {
 	$cataseo_placeholders = implode( ',', array_fill( 0, count( $cataseo_webhook_ids ), '%d' ) );
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$wpdb->query(
 		$wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			"DELETE FROM {$wpdb->prefix}wc_webhooks WHERE webhook_id IN ($cataseo_placeholders)",
 			...$cataseo_webhook_ids
 		)

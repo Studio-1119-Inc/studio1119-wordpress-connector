@@ -186,11 +186,11 @@ class Rest_Bridge {
 		// AIOSEO stores data in its own table, not post_meta.
 		if ( SEO_Plugin_Detector::MODE_AIOSEO === $mode ) {
 			$row = self::aioseo_get_row( $post_id );
+
 			$out['page_title']       = $row ? (string) $row->title : null;
 			$out['meta_description'] = $row ? (string) $row->description : null;
 			$out['og_title']         = $row ? (string) $row->og_title : null;
 			$out['og_description']   = $row ? (string) $row->og_description : null;
-			// AIOSEO stores keyphrases as JSON: {"focus":{"keyphrase":"...","score":0,...}}
 			$out['meta_keywords']    = null;
 			if ( $row && ! empty( $row->keyphrases ) ) {
 				$kp = json_decode( $row->keyphrases, true );
@@ -235,6 +235,7 @@ class Rest_Bridge {
 				'og_title'         => 'og_title',
 				'og_description'   => 'og_description',
 			);
+
 			$data = array();
 			foreach ( $col_map as $field => $col ) {
 				$value = $request->get_param( $field );
@@ -246,7 +247,7 @@ class Rest_Bridge {
 			// Handle keyphrases (focus keyword) — stored as JSON in AIOSEO.
 			$keywords = $request->get_param( 'meta_keywords' );
 			if ( null !== $keywords ) {
-				$keyphrase = is_array( $keywords ) ? implode( ', ', $keywords ) : sanitize_text_field( (string) $keywords );
+				$keyphrase          = is_array( $keywords ) ? implode( ', ', $keywords ) : sanitize_text_field( (string) $keywords );
 				$data['keyphrases'] = wp_json_encode(
 					array(
 						'focus'      => array(
