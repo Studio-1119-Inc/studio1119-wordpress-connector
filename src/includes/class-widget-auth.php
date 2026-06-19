@@ -81,11 +81,13 @@ class Widget_Auth {
 	 * Validate WooCommerce HTTP Basic Auth credentials.
 	 *
 	 * Checks the Authorization header against WC's woocommerce_api_keys table.
-	 * Used for server-to-server calls from the remote backend.
+	 * Used for server-to-server calls from the remote backend. Verifies the
+	 * key owner's WordPress capability and the key's permission level.
 	 *
-	 * @return bool True if credentials are valid.
+	 * @param string $required_permission 'read' or 'write'. Default 'read'.
+	 * @return bool True if credentials are valid and sufficient.
 	 */
-	public static function check_wc_auth() {
+	public static function check_wc_auth( $required_permission = 'read' ) {
 		$auth_header = '';
 		if ( isset( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
 			$auth_header = sanitize_text_field( wp_unslash( $_SERVER['HTTP_AUTHORIZATION'] ) );
@@ -113,7 +115,7 @@ class Widget_Auth {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- WC provides no public API for verifying consumer keys; caching auth checks would be a security risk.
 		$key_data = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT consumer_secret, permissions FROM {$wpdb->prefix}woocommerce_api_keys WHERE consumer_key = %s",
+				"SELECT consumer_secret, permissions, user_id FROM {$wpdb->prefix}woocommerce_api_keys WHERE consumer_key = %s",
 				wc_api_hash( $consumer_key )
 			)
 		);
@@ -122,6 +124,19 @@ class Widget_Auth {
 			return false;
 		}
 
-		return hash_equals( $key_data->consumer_secret, $consumer_secret );
+		if ( ! hash_equals( $key_data->consumer_secret, $consumer_secret ) ) {
+			return false;
+		}
+
+		$user = get_userdata( (int) $key_data->user_id );
+		if ( ! $user || ! $user->has_cap( 'manage_woocommerce' ) ) {
+			return false;
+		}
+
+		if ( 'write' === $required_permission && 'read' === $key_data->permissions ) {
+			return false;
+		}
+
+		return true;
 	}
 }

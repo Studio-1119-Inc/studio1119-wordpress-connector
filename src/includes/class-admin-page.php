@@ -22,8 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Admin_Page {
 
-	const CONNECTED_OPTION_SUFFIX      = '_connected';
-	const CONNECTED_USER_OPTION_SUFFIX = '_connected_user';
+	const CONNECTED_OPTION      = '{{APP_OPTION_PREFIX}}_connected';
+	const CONNECTED_USER_OPTION = '{{APP_OPTION_PREFIX}}_connected_user';
 
 	/**
 	 * Derive the admin page slug from the per-app option prefix.
@@ -116,28 +116,29 @@ class Admin_Page {
 	 * @return void
 	 */
 	public static function handle_oauth_return() {
-		$prefix = Plugin::const_value( 'OPTION_PREFIX' );
-		if ( ! $prefix ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- early-exit gate; nonce verified below before any state change.
+		if ( ! isset( $_GET['{{APP_OPTION_PREFIX}}_connected'] ) ) {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- OAuth return redirect, no state change from user input.
-		if ( ! isset( $_GET[ $prefix . '_connected' ] ) ) {
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			return;
 		}
 
-		// Mark as connected and store the display name from the query param if provided.
-		update_option( $prefix . self::CONNECTED_OPTION_SUFFIX, '1' );
+		$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, '{{APP_OPTION_PREFIX}}_oauth_return' ) ) {
+			return;
+		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$user_label = isset( $_GET[ $prefix . '_user' ] )
-			? sanitize_text_field( wp_unslash( $_GET[ $prefix . '_user' ] ) )
+		update_option( self::CONNECTED_OPTION, '1' );
+
+		$user_label = isset( $_GET['{{APP_OPTION_PREFIX}}_user'] )
+			? sanitize_text_field( wp_unslash( $_GET['{{APP_OPTION_PREFIX}}_user'] ) )
 			: '';
 		if ( $user_label ) {
-			update_option( $prefix . self::CONNECTED_USER_OPTION_SUFFIX, $user_label );
+			update_option( self::CONNECTED_USER_OPTION, $user_label );
 		}
 
-		// Redirect to clean URL to avoid re-triggering on refresh.
 		wp_safe_redirect( admin_url( 'admin.php?page=' . self::page_slug() ) );
 		exit;
 	}
@@ -148,11 +149,7 @@ class Admin_Page {
 	 * @return bool
 	 */
 	public static function is_connected() {
-		$prefix = Plugin::const_value( 'OPTION_PREFIX' );
-		if ( ! $prefix ) {
-			return false;
-		}
-		return '1' === get_option( $prefix . self::CONNECTED_OPTION_SUFFIX );
+		return '1' === get_option( self::CONNECTED_OPTION );
 	}
 
 	/**
@@ -161,11 +158,7 @@ class Admin_Page {
 	 * @return string
 	 */
 	public static function connected_user_label() {
-		$prefix = Plugin::const_value( 'OPTION_PREFIX' );
-		if ( ! $prefix ) {
-			return '';
-		}
-		return get_option( $prefix . self::CONNECTED_USER_OPTION_SUFFIX, '' );
+		return get_option( self::CONNECTED_USER_OPTION, '' );
 	}
 
 	/**
@@ -295,8 +288,8 @@ class Admin_Page {
 	 * @return void
 	 */
 	private static function render_connect_state( $menu_title, $widget_url, $product_count, $version ) {
-		$prefix     = Plugin::const_value( 'OPTION_PREFIX' );
-		$return_url = admin_url( 'admin.php?page=' . self::page_slug() . '&' . $prefix . '_connected=1' );
+		$nonce      = wp_create_nonce( '{{APP_OPTION_PREFIX}}_oauth_return' );
+		$return_url = admin_url( 'admin.php?page=' . self::page_slug() . '&{{APP_OPTION_PREFIX}}_connected=1&_wpnonce=' . $nonce );
 
 		// Build the OAuth initiation URL on our SaaS backend.
 		$site_url = get_site_url();

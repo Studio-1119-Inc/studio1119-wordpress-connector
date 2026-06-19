@@ -73,7 +73,9 @@ class Rest_Bridge {
 			'/verify-token',
 			array(
 				'methods'             => 'POST',
-				'permission_callback' => array( '{{APP_NAMESPACE}}\Widget_Auth', 'check_wc_auth' ),
+				'permission_callback' => function () {
+					return Widget_Auth::check_wc_auth( 'write' );
+				},
 				'callback'            => array( __CLASS__, 'verify_widget_token' ),
 			)
 		);
@@ -128,15 +130,20 @@ class Rest_Bridge {
 	 *   1. A logged-in WP user with `manage_woocommerce` capability (nonce-based, widget iframe).
 	 *   2. WC API key Basic Auth (server-to-server calls from the remote backend).
 	 *
+	 * For WC API key auth, GET requests require at least 'read' permission
+	 * and POST requests require 'write' or 'read_write' permission. The key
+	 * owner's WordPress user must also have `manage_woocommerce` capability.
+	 *
+	 * @param \WP_REST_Request $request The incoming REST request.
 	 * @return bool
 	 */
-	public static function check_permission() {
+	public static function check_permission( \WP_REST_Request $request ) {
 		if ( current_user_can( 'manage_woocommerce' ) ) {
 			return true;
 		}
 
-		// Fall back to WC API key auth for server-to-server requests.
-		return Widget_Auth::check_wc_auth();
+		$required = 'GET' === $request->get_method() ? 'read' : 'write';
+		return Widget_Auth::check_wc_auth( $required );
 	}
 
 	/**

@@ -22,8 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Plugin {
 
-	const DETECTED_MODE_OPTION_SUFFIX   = '_detected_seo_mode';
-	const MODE_CHECKED_AT_OPTION_SUFFIX = '_mode_checked_at';
+	const DETECTED_MODE_OPTION   = '{{APP_OPTION_PREFIX}}_detected_seo_mode';
+	const MODE_CHECKED_AT_OPTION = '{{APP_OPTION_PREFIX}}_mode_checked_at';
 
 	/**
 	 * Boot the plugin: load text domain, register hooks and subsystems.
@@ -31,12 +31,6 @@ class Plugin {
 	 * @return void
 	 */
 	public static function boot() {
-		load_plugin_textdomain(
-			self::const_value( 'TEXT_DOMAIN' ),
-			false,
-			dirname( plugin_basename( self::const_value( 'PLUGIN_FILE' ) ) ) . '/languages'
-		);
-
 		// Declare compatibility with WooCommerce HPOS (High-Performance Order Storage).
 		// This plugin only reads/writes product SEO meta — it never touches orders.
 		add_action( 'before_woocommerce_init', array( __CLASS__, 'declare_hpos_compatibility' ) );
@@ -126,11 +120,10 @@ class Plugin {
 	 * @return void
 	 */
 	public static function uninstall() {
-		$prefix = self::const_value( 'OPTION_PREFIX' );
-		delete_option( $prefix . self::DETECTED_MODE_OPTION_SUFFIX );
-		delete_option( $prefix . self::MODE_CHECKED_AT_OPTION_SUFFIX );
-		delete_option( $prefix . Admin_Page::CONNECTED_OPTION_SUFFIX );
-		delete_option( $prefix . Admin_Page::CONNECTED_USER_OPTION_SUFFIX );
+		delete_option( self::DETECTED_MODE_OPTION );
+		delete_option( self::MODE_CHECKED_AT_OPTION );
+		delete_option( Admin_Page::CONNECTED_OPTION );
+		delete_option( Admin_Page::CONNECTED_USER_OPTION );
 	}
 
 	/**
@@ -139,10 +132,9 @@ class Plugin {
 	 * @return void
 	 */
 	public static function refresh_detected_mode() {
-		$mode   = SEO_Plugin_Detector::detect();
-		$prefix = self::const_value( 'OPTION_PREFIX' );
-		update_option( $prefix . self::DETECTED_MODE_OPTION_SUFFIX, $mode );
-		update_option( $prefix . self::MODE_CHECKED_AT_OPTION_SUFFIX, time() );
+		$mode = SEO_Plugin_Detector::detect();
+		update_option( self::DETECTED_MODE_OPTION, $mode );
+		update_option( self::MODE_CHECKED_AT_OPTION, time() );
 	}
 
 	/**
@@ -151,8 +143,7 @@ class Plugin {
 	 * @return string One of SEO_Plugin_Detector::MODE_* constants.
 	 */
 	public static function get_detected_mode() {
-		$prefix = self::const_value( 'OPTION_PREFIX' );
-		$mode   = get_option( $prefix . self::DETECTED_MODE_OPTION_SUFFIX );
+		$mode = get_option( self::DETECTED_MODE_OPTION );
 		if ( ! $mode ) {
 			$mode = SEO_Plugin_Detector::detect();
 		}
