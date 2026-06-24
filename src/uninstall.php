@@ -13,19 +13,19 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-$cataseo_option_prefix = '{{APP_OPTION_PREFIX}}';
+${{APP_OPTION_PREFIX}}_option_prefix = '{{APP_OPTION_PREFIX}}';
 
 // Plugin options to clean up.
-$cataseo_options = array(
-	$cataseo_option_prefix . '_connected',
-	$cataseo_option_prefix . '_connected_user',
-	$cataseo_option_prefix . '_detected_seo_mode',
-	$cataseo_option_prefix . '_mode_checked_at',
+${{APP_OPTION_PREFIX}}_options = array(
+	${{APP_OPTION_PREFIX}}_option_prefix . '_connected',
+	${{APP_OPTION_PREFIX}}_option_prefix . '_connected_user',
+	${{APP_OPTION_PREFIX}}_option_prefix . '_detected_seo_mode',
+	${{APP_OPTION_PREFIX}}_option_prefix . '_mode_checked_at',
 );
 
-foreach ( $cataseo_options as $cataseo_option ) {
-	delete_option( $cataseo_option );
-	delete_site_option( $cataseo_option ); // Multisite compliance.
+foreach ( ${{APP_OPTION_PREFIX}}_options as ${{APP_OPTION_PREFIX}}_option ) {
+	delete_option( ${{APP_OPTION_PREFIX}}_option );
+	delete_site_option( ${{APP_OPTION_PREFIX}}_option ); // Multisite compliance.
 }
 
 // Clean up widget auth transients (one-time tokens, 5-minute TTL).
@@ -35,22 +35,22 @@ foreach ( $cataseo_options as $cataseo_option ) {
 // Clean up WooCommerce webhooks registered by this plugin.
 // Webhooks are identified by their name prefix (e.g. "TruSync order.created").
 global $wpdb;
-$cataseo_menu_title = '{{APP_MENU_TITLE}}';
+${{APP_OPTION_PREFIX}}_menu_title = '{{APP_MENU_TITLE}}';
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-$cataseo_webhook_ids = $wpdb->get_col(
+${{APP_OPTION_PREFIX}}_webhook_ids = $wpdb->get_col(
 	$wpdb->prepare(
 		"SELECT webhook_id FROM {$wpdb->prefix}wc_webhooks WHERE name LIKE %s",
-		$cataseo_menu_title . '%'
+		${{APP_OPTION_PREFIX}}_menu_title . '%'
 	)
 );
-if ( ! empty( $cataseo_webhook_ids ) ) {
-	$cataseo_placeholders = implode( ',', array_fill( 0, count( $cataseo_webhook_ids ), '%d' ) );
+if ( ! empty( ${{APP_OPTION_PREFIX}}_webhook_ids ) ) {
+	${{APP_OPTION_PREFIX}}_placeholders = implode( ',', array_fill( 0, count( ${{APP_OPTION_PREFIX}}_webhook_ids ), '%d' ) );
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$wpdb->query(
 		$wpdb->prepare(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			"DELETE FROM {$wpdb->prefix}wc_webhooks WHERE webhook_id IN ($cataseo_placeholders)",
-			...$cataseo_webhook_ids
+			"DELETE FROM {$wpdb->prefix}wc_webhooks WHERE webhook_id IN (${{APP_OPTION_PREFIX}}_placeholders)",
+			...${{APP_OPTION_PREFIX}}_webhook_ids
 		)
 	);
 }
@@ -61,7 +61,7 @@ if ( ! empty( $cataseo_webhook_ids ) ) {
 $wpdb->query(
 	$wpdb->prepare(
 		"DELETE FROM {$wpdb->prefix}woocommerce_api_keys WHERE description LIKE %s",
-		$cataseo_menu_title . ' - API%'
+		${{APP_OPTION_PREFIX}}_menu_title . ' - API%'
 	)
 );
 
