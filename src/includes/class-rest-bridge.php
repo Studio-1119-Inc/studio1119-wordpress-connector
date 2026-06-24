@@ -55,19 +55,10 @@ class Rest_Bridge {
 	 * @return void
 	 */
 	public static function register_routes() {
-		register_rest_route(
-			self::NAMESPACE_ROOT,
-			'/seo/status',
-			array(
-				'methods'             => 'GET',
-				'permission_callback' => array( __CLASS__, 'check_permission' ),
-				'callback'            => array( __CLASS__, 'get_status' ),
-			)
-		);
-
 		// Token verification endpoint — used by the remote backend to verify
-		// one-time widget tokens. Authenticated via WC HTTP Basic Auth
-		// (consumer_key:consumer_secret), not WP nonce.
+		// one-time widget tokens during SSO. Needed by every app type (SEO and
+		// sync), so it is always registered. Authenticated via WC HTTP Basic
+		// Auth (consumer_key:consumer_secret), not WP nonce.
 		register_rest_route(
 			self::NAMESPACE_ROOT,
 			'/verify-token',
@@ -77,6 +68,24 @@ class Rest_Bridge {
 					return Widget_Auth::check_wc_auth( 'write' );
 				},
 				'callback'            => array( __CLASS__, 'verify_widget_token' ),
+			)
+		);
+
+		// SEO endpoints — only for SEO-type apps. Their callbacks depend on the
+		// SEO subsystems (SEO_Plugin_Detector, Field_Mapper) that plugin.php
+		// only loads when APP_TYPE is 'seo'; registering them for a sync app
+		// would expose routes that fatal on a missing class when called.
+		if ( 'seo' !== Plugin::const_value( 'APP_TYPE' ) ) {
+			return;
+		}
+
+		register_rest_route(
+			self::NAMESPACE_ROOT,
+			'/seo/status',
+			array(
+				'methods'             => 'GET',
+				'permission_callback' => array( __CLASS__, 'check_permission' ),
+				'callback'            => array( __CLASS__, 'get_status' ),
 			)
 		);
 
