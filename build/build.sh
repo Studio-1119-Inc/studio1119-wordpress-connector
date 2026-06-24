@@ -104,6 +104,36 @@ else
     echo "warning: no per-app changelog at $APP_CHANGELOG, using src/changelog.txt" >&2
 fi
 
+# Per-app readme — each app documents its own service in readmes/<app>.txt
+# (WordPress.org Guideline 6 requires the readme to describe the external
+# service this connector talks to). Falls back to the bundled src/readme.txt
+# (token-substituted) if no per-app file exists.
+APP_README="$REPO_ROOT/readmes/$APP.txt"
+if [ -f "$APP_README" ]; then
+    cp "$APP_README" "$STAGING_DIR/$PLUGIN_SLUG/readme.txt"
+else
+    echo "warning: no per-app readme at $APP_README, using src/readme.txt" >&2
+fi
+
+# SEO-only subsystems — these files are loaded by plugin.php ONLY when
+# app_type is 'seo' (see the guarded require_once block there). For non-SEO
+# apps (e.g. trusync) they are dead weight, so drop them from the package.
+# Every reference to these classes in the shared files sits behind an
+# 'seo' === APP_TYPE check, so a sync build never executes code that needs them.
+SEO_ONLY_FILES=(
+    "class-seo-plugin-detector.php"
+    "class-field-mapper.php"
+    "class-standalone-head.php"
+    "class-seo-meta-notifier.php"
+    "class-taxonomy-notifier.php"
+)
+if [ "$APP_TYPE" != "seo" ]; then
+    for seo_file in "${SEO_ONLY_FILES[@]}"; do
+        rm -f "$STAGING_DIR/$PLUGIN_SLUG/includes/$seo_file"
+    done
+    echo "stripped ${#SEO_ONLY_FILES[@]} SEO-only files (app_type=$APP_TYPE)"
+fi
+
 substitute() {
     local file="$1"
     sed \

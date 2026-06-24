@@ -1,0 +1,64 @@
+=== {{APP_PLUGIN_NAME}} ===
+Contributors: developstudio1119
+Tags: woocommerce, quickbooks, accounting, inventory, sync
+Requires at least: 6.4
+Tested up to: 7.0
+Requires PHP: 7.4
+Stable tag: {{APP_VERSION}}
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+
+{{APP_DESCRIPTION}}
+
+== Description ==
+
+{{APP_PLUGIN_NAME}} connects your WooCommerce store to the {{APP_MENU_TITLE}} cloud service, which automatically posts your orders and inventory to QuickBooks Online so your accounting records stay in sync without manual data entry.
+
+Once you connect your store, {{APP_MENU_TITLE}} keeps WooCommerce and QuickBooks Online aligned:
+
+* **Order sync** — each WooCommerce order is posted to QuickBooks Online as the matching sales document, in real time via WooCommerce webhooks.
+* **Inventory sync** — stock changes flow between QuickBooks Online and WooCommerce so quantities match in both systems.
+* **Payment mapping** — order payment methods are mapped to the correct QuickBooks Online deposit accounts.
+* **Sales tax mapping** — order tax lines are mapped to your QuickBooks Online tax jurisdictions.
+* **Product matching** — your WooCommerce products are matched to existing QuickBooks Online items, with historical order backfill available.
+
+= External service =
+
+{{APP_PLUGIN_NAME}} is the WooCommerce connector for the {{APP_MENU_TITLE}} service, and a {{APP_MENU_TITLE}} account is required. All order processing, QuickBooks Online communication, billing, and account management happen on the {{APP_MENU_TITLE}} service. The plugin securely links your store to that service over the WooCommerce REST API and provides single sign-on to the {{APP_MENU_TITLE}} dashboard. No accounting data is stored in WordPress.
+
+* Service: {{APP_WIDGET_URL}}
+
+== Installation ==
+
+1. Upload the plugin zip through **Plugins > Add New > Upload Plugin**, or install from the WordPress.org directory.
+2. Activate the plugin through the **Plugins** menu in WordPress.
+3. Click the **{{APP_MENU_TITLE}}** menu item in the admin sidebar.
+4. Click **Connect** to authorize the connection to your {{APP_MENU_TITLE}} account and start syncing.
+
+== Frequently Asked Questions ==
+
+= Do I need a QuickBooks Online account? =
+
+Yes. {{APP_MENU_TITLE}} synchronizes your WooCommerce store with QuickBooks Online, so an active QuickBooks Online account is required.
+
+= Do I need a {{APP_MENU_TITLE}} account? =
+
+Yes. The plugin connects your store to the {{APP_MENU_TITLE}} service, which performs the synchronization. You can create an account during the connection step.
+
+= Where does the synchronization happen? =
+
+Order and inventory processing happens on the {{APP_MENU_TITLE}} service. The plugin connects your store to that service and does not store accounting data in your WordPress database.
+
+= What happens when I uninstall the plugin? =
+
+The plugin removes its own options, the WooCommerce webhooks it registered, and the WooCommerce API keys created during connection. Your WooCommerce orders and products are never modified or deleted.
+
+== Changelog ==
+
+= {{APP_VERSION}} =
+* Initial release.
+
+== Upgrade Notice ==
+
+= {{APP_VERSION}} =
+Initial release.
