@@ -78,6 +78,50 @@ class Widget_Auth {
 	}
 
 	/**
+	 * Extract HTTP Basic Auth credentials from the request.
+	 *
+	 * Tries two sources, because PHP exposes Basic Auth differently depending
+	 * on the server API:
+	 *   1. The raw `Authorization` header ($_SERVER['HTTP_AUTHORIZATION'], or
+	 *      REDIRECT_HTTP_AUTHORIZATION behind a rewrite). Present under CGI/
+	 *      FastCGI, or when Apache is configured to pass the header through.
+	 *   2. $_SERVER['PHP_AUTH_USER'] / ['PHP_AUTH_PW']. Under Apache + mod_php
+	 *      the Basic header is consumed by the server and the decoded values
+	 *      are exposed here instead, with HTTP_AUTHORIZATION often unset. This
+	 *      is the path WooCommerce's own REST authentication reads, which is
+	 *      why wc/* calls authenticate even when a header-only check fails.
+	 *
+	 * @return array{0:string,1:string} [ consumer_key, consumer_secret ]; empty strings if absent.
+	 */
+	private static function basic_auth_credentials() {
+		$auth_header = '';
+		if ( ! empty( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
+			$auth_header = wp_unslash( $_SERVER['HTTP_AUTHORIZATION'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- decoded and split below; secret compared via hash_equals.
+		} elseif ( ! empty( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ) {
+			$auth_header = wp_unslash( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- decoded and split below; secret compared via hash_equals.
+		}
+
+		if ( '' !== $auth_header && 0 === strpos( $auth_header, 'Basic ' ) ) {
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+			$decoded = base64_decode( substr( $auth_header, 6 ) );
+			if ( false !== $decoded && false !== strpos( $decoded, ':' ) ) {
+				list( $key, $secret ) = explode( ':', $decoded, 2 );
+				return array( sanitize_text_field( $key ), $secret );
+			}
+		}
+
+		// Apache + mod_php fallback: server-decoded Basic credentials.
+		if ( isset( $_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'] ) ) {
+			return array(
+				sanitize_text_field( wp_unslash( $_SERVER['PHP_AUTH_USER'] ) ),
+				wp_unslash( $_SERVER['PHP_AUTH_PW'] ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- compared via hash_equals below.
+			);
+		}
+
+		return array( '', '' );
+	}
+
+	/**
 	 * Validate WooCommerce HTTP Basic Auth credentials.
 	 *
 	 * Checks the Authorization header against WC's woocommerce_api_keys table.
@@ -88,24 +132,11 @@ class Widget_Auth {
 	 * @return bool True if credentials are valid and sufficient.
 	 */
 	public static function check_wc_auth( $required_permission = 'read' ) {
-		$auth_header = '';
-		if ( isset( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
-			$auth_header = sanitize_text_field( wp_unslash( $_SERVER['HTTP_AUTHORIZATION'] ) );
-		} elseif ( isset( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ) {
-			$auth_header = sanitize_text_field( wp_unslash( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) );
-		}
+		list( $consumer_key, $consumer_secret ) = self::basic_auth_credentials();
 
-		if ( empty( $auth_header ) || 0 !== strpos( $auth_header, 'Basic ' ) ) {
+		if ( '' === $consumer_key || '' === $consumer_secret ) {
 			return false;
 		}
-
-		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
-		$decoded = base64_decode( substr( $auth_header, 6 ) );
-		if ( false === strpos( $decoded, ':' ) ) {
-			return false;
-		}
-
-		list( $consumer_key, $consumer_secret ) = explode( ':', $decoded, 2 );
 
 		if ( ! function_exists( 'wc_api_hash' ) ) {
 			return false;
