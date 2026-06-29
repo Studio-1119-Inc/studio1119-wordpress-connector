@@ -31,10 +31,13 @@ This plugin does not provide sitemaps, schema.org markup, canonical URL manageme
 
 == Installation ==
 
-1. Upload the plugin zip through **Plugins > Add New > Upload Plugin**, or install from the WordPress.org directory.
-2. Activate the plugin through the **Plugins** menu in WordPress.
-3. Click the **{{APP_MENU_TITLE}}** menu item in the admin sidebar.
-4. Sign in or create an account to start optimizing your products.
+1. Make sure WooCommerce is installed and activated on your site.
+2. In your WordPress admin, go to **Plugins > Add New** and search for "CataSEO". Click **Install Now**, then **Activate**. (Alternatively, download the zip from this listing and upload it via **Plugins > Add New > Upload Plugin**.)
+3. In the WordPress admin sidebar, go to **WooCommerce > CataSEO**.
+4. Click **Connect to CataSEO**. You will be redirected to WooCommerce's authorization screen.
+5. Review the requested permissions (read and write access to your products) and click **Approve**.
+6. You are returned to the CataSEO page showing **Connection Active**.
+7. Click **Launch Dashboard** to open the CataSEO app and start optimizing your products.
 
 == Frequently Asked Questions ==
 
