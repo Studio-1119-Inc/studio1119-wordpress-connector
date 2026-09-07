@@ -500,11 +500,11 @@ class Rest_Bridge {
 		$mode = Plugin::get_detected_mode();
 
 		$meta_description = null;
-		$meta_keywords     = null;
+		$meta_keywords    = null;
 
 		// AIOSEO stores data in its own table, not post_meta.
 		if ( SEO_Plugin_Detector::MODE_AIOSEO === $mode ) {
-			$row = self::aioseo_get_row( $post->ID );
+			$row              = self::aioseo_get_row( $post->ID );
 			$meta_description = $row ? (string) $row->description : null;
 			if ( $row && ! empty( $row->keyphrases ) ) {
 				$kp = json_decode( $row->keyphrases, true );
@@ -519,7 +519,8 @@ class Rest_Bridge {
 			$meta_keywords    = $kw_key ? (string) get_post_meta( $post->ID, $kw_key, true ) : null;
 		}
 
-		$tags = wp_get_post_tags( $post->ID, array( 'fields' => 'names' ) );
+		$tags          = wp_get_post_tags( $post->ID, array( 'fields' => 'names' ) );
+		$thumbnail_url = get_the_post_thumbnail_url( $post->ID, 'full' );
 
 		return array(
 			'id'               => (string) $post->ID,
@@ -528,7 +529,7 @@ class Rest_Bridge {
 			'published_date'   => 'publish' === $post->post_status ? mysql2date( 'c', $post->post_date_gmt, false ) : null,
 			'is_published'     => 'publish' === $post->post_status,
 			'author'           => get_the_author_meta( 'display_name', $post->post_author ),
-			'thumbnail_path'   => get_the_post_thumbnail_url( $post->ID, 'full' ) ?: null,
+			'thumbnail_path'   => $thumbnail_url ? $thumbnail_url : null,
 			'body'             => $post->post_content,
 			'summary'          => $post->post_excerpt,
 			'tags'             => is_array( $tags ) ? $tags : array(),
@@ -544,8 +545,8 @@ class Rest_Bridge {
 	 * four-mode field mapper (and AIOSEO table) that product SEO meta uses —
 	 * both are keyed by post ID, not post type.
 	 *
-	 * @param int               $post_id WordPress post ID.
-	 * @param \WP_REST_Request  $request The REST request containing the fields.
+	 * @param int              $post_id WordPress post ID.
+	 * @param \WP_REST_Request $request The REST request containing the fields.
 	 * @return void
 	 */
 	private static function write_blog_seo_meta( $post_id, \WP_REST_Request $request ) {
