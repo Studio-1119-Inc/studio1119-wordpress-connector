@@ -84,7 +84,7 @@ class FieldMapperTest extends TestCase {
 	}
 
 	/**
-	 * Test Rank Math mode returns correct meta keys and null for meta_keywords.
+	 * Test Rank Math mode returns correct meta keys.
 	 *
 	 * @return void
 	 */
@@ -105,7 +105,8 @@ class FieldMapperTest extends TestCase {
 			'rank_math_facebook_description',
 			Field_Mapper::meta_key( 'og_description', SEO_Plugin_Detector::MODE_RANK_MATH )
 		);
-		$this->assertNull(
+		$this->assertSame(
+			'rank_math_focus_keyword',
 			Field_Mapper::meta_key( 'meta_keywords', SEO_Plugin_Detector::MODE_RANK_MATH )
 		);
 	}
@@ -132,7 +133,8 @@ class FieldMapperTest extends TestCase {
 			'_aioseo_og_description',
 			Field_Mapper::meta_key( 'og_description', SEO_Plugin_Detector::MODE_AIOSEO )
 		);
-		$this->assertNull(
+		$this->assertSame(
+			'_aioseo_keyphrases',
 			Field_Mapper::meta_key( 'meta_keywords', SEO_Plugin_Detector::MODE_AIOSEO )
 		);
 	}
@@ -161,7 +163,8 @@ class FieldMapperTest extends TestCase {
 			'_testmeta_og_description',
 			Field_Mapper::meta_key( 'og_description', SEO_Plugin_Detector::MODE_STANDALONE )
 		);
-		$this->assertNull(
+		$this->assertSame(
+			'_testmeta_keywords',
 			Field_Mapper::meta_key( 'meta_keywords', SEO_Plugin_Detector::MODE_STANDALONE )
 		);
 	}
