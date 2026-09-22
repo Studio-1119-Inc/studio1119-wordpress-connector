@@ -180,6 +180,20 @@ class SecurityTest extends TestCase {
 	 *
 	 * @return void
 	 */
+	/**
+	 * The handler ends `wp_safe_redirect( ... ); exit;`. `exit` is a language
+	 * construct, so it cannot be stubbed — reaching it kills the PHPUnit
+	 * process itself, which prints no summary and exits 0. That reads as a
+	 * passing run while every later test silently never executes.
+	 *
+	 * So the redirect stub throws instead. Both `update_option` calls happen
+	 * BEFORE the redirect (class-admin-page.php, handle_oauth_return), so every
+	 * assertion this test makes is already satisfied when the throw unwinds —
+	 * and `exit` is never reached. Asserting the exception is therefore an
+	 * assertion that the handler got as far as redirecting.
+	 *
+	 * @return void
+	 */
 	public function test_oauth_return_succeeds_with_capability_and_nonce(): void {
 		$_GET['testapp_connected'] = '1';
 		$_GET['_wpnonce']          = 'good-nonce';
@@ -206,7 +220,15 @@ class SecurityTest extends TestCase {
 			->with( 'testapp_connected_user', 'shop@example.com' );
 
 		Functions\expect( 'admin_url' )->once()->andReturn( 'https://shop.test/wp-admin/' );
-		Functions\expect( 'wp_safe_redirect' )->once();
+		Functions\expect( 'wp_safe_redirect' )
+			->once()
+			->andReturnUsing(
+				function () {
+					throw new RedirectedException();
+				}
+			);
+
+		$this->expectException( RedirectedException::class );
 
 		Admin_Page::handle_oauth_return();
 	}
@@ -462,4 +484,11 @@ class SecurityTest extends TestCase {
 			}
 		);
 	}
+}
+
+/**
+ * Sentinel thrown by the stubbed `wp_safe_redirect` so a handler that ends in
+ * `exit` can be tested without taking the PHPUnit process down with it.
+ */
+class RedirectedException extends \RuntimeException {
 }
