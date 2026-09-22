@@ -1,8 +1,8 @@
 === {{APP_PLUGIN_NAME}} ===
 Contributors: developstudio1119
 Tags: woocommerce, seo, ai, product descriptions, meta tags
-Requires at least: 6.4
-Tested up to: 7.0
+Requires at least: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: {{APP_VERSION}}
 License: GPLv2 or later
