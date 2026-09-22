@@ -188,18 +188,48 @@ class Admin_Page {
 		$post_id   = get_the_ID();
 		$has_title = $post_id ? get_post_meta( $post_id, Field_Mapper::meta_key( 'page_title', 'standalone' ), true ) : '';
 
+		$app_name = '<strong>' . esc_html( $menu_title ) . '</strong>';
+
+		$dashboard_link = sprintf(
+			'<a href="%1$s">%2$s</a>',
+			esc_url( $admin_url ),
+			esc_html(
+				sprintf(
+					/* translators: %s: app name */
+					__( '%s dashboard', '{{APP_TEXT_DOMAIN}}' ),
+					$menu_title
+				)
+			)
+		);
+
+		$allowed_html = array(
+			'strong' => array(),
+			'a'      => array( 'href' => array() ),
+		);
+
 		if ( $has_title ) {
-			echo '<div class="notice notice-success"><p>';
-			echo '<strong>' . esc_html( $menu_title ) . '</strong> has optimized your SEO meta tags and inserted them directly into this product\'s page. All set! ';
-			echo 'Manage your SEO from the <a href="' . esc_url( $admin_url ) . '">' . esc_html( $menu_title ) . ' dashboard</a>.';
-			echo '</p></div>';
+			$message = sprintf(
+				/* translators: 1: app name, in bold. 2: link to the plugin's dashboard, labelled e.g. "CataSEO dashboard". */
+				__( '%1$s has optimized your SEO meta tags and inserted them directly into this product\'s page. All set! Manage your SEO from the %2$s.', '{{APP_TEXT_DOMAIN}}' ),
+				$app_name,
+				$dashboard_link
+			);
+			$class = 'notice notice-success is-dismissible';
 		} else {
-			echo '<div class="notice notice-info"><p>';
-			echo '<strong>' . esc_html( $menu_title ) . ':</strong> ';
-			echo 'No SEO plugin detected. Optimize this product from the <a href="' . esc_url( $admin_url ) . '">' . esc_html( $menu_title ) . ' dashboard</a> ';
-			echo 'and SEO meta tags will be inserted directly into the page.';
-			echo '</p></div>';
+			$message = sprintf(
+				/* translators: 1: app name, in bold. 2: link to the plugin's dashboard, labelled e.g. "CataSEO dashboard". */
+				__( '%1$s: No SEO plugin detected. Optimize this product from the %2$s and SEO meta tags will be inserted directly into the page.', '{{APP_TEXT_DOMAIN}}' ),
+				$app_name,
+				$dashboard_link
+			);
+			$class = 'notice notice-info is-dismissible';
 		}
+
+		printf(
+			'<div class="%1$s"><p>%2$s</p></div>',
+			esc_attr( $class ),
+			wp_kses( $message, $allowed_html )
+		);
 	}
 
 	/**
