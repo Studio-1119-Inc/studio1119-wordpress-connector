@@ -1,4 +1,4 @@
-=== {{APP_PLUGIN_NAME}} ===
+=== CataSEO – AI Catalog SEO for WooCommerce: Products, Categories, Brands & Blog ===
 Contributors: developstudio1119
 Tags: woocommerce, seo, ai, product descriptions, meta tags
 Requires at least: 7.0
@@ -8,54 +8,180 @@ Stable tag: {{APP_VERSION}}
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
-{{APP_DESCRIPTION}}
+AI SEO for your whole catalog — products, categories, brands, image alt text and blog posts. Works with Yoast, Rank Math and AIOSEO.
 
 == Description ==
 
-{{APP_PLUGIN_NAME}} connects your WooCommerce store to the {{APP_MENU_TITLE}} cloud service for AI-powered product descriptions and SEO meta generation.
+CataSEO connects your WooCommerce store to the CataSEO cloud service, which writes
+product descriptions and SEO meta for your catalog.
 
-The plugin itself is a thin shim: it adds a {{APP_MENU_TITLE}} menu item to your WordPress admin and loads the {{APP_MENU_TITLE}} interface inside it. All product optimization, billing, and account management happens on {{APP_WIDGET_URL}}.
+The plugin adds a CataSEO item to your WooCommerce menu showing connection status and
+which SEO plugin it has detected. From there, a button opens the CataSEO dashboard in a
+new tab. Optimization, billing and account management all happen there, at
+https://app.cataseo.ai — the plugin's job is to connect the two and to write approved
+content back into your store.
+
+Yoast, Rank Math and AIOSEO give you the fields. They don't write what goes in them, and
+on a catalog of any size the product fields are the ones that stay empty. That's the gap
+this fills.
+
+= You approve every change =
+
+CataSEO generates; you decide. Nothing is written to a product until you have seen the
+before and the after side by side and approved it. Product descriptions can be edited
+before you accept them, as rich text, as HTML, or previewed as they will appear — and if
+an edit would strip markup your description already had, CataSEO holds it and tells you
+what would have been removed rather than quietly dropping it.
 
 = Works alongside your existing SEO plugin =
 
 * Yoast SEO — writes into Yoast's meta fields
 * Rank Math — writes into Rank Math's meta fields
 * All in One SEO — writes into AIOSEO's meta fields
-* None of the above — ships a minimal standalone meta output layer so your generated content is still visible to search engines and social media
+* None of the above — ships a minimal standalone meta output layer so your generated
+  content is still visible to search engines and social media
 
-The plugin detects which SEO plugin you have active and automatically writes content to the right place. If you later install or switch SEO plugins, it adapts on the next admin page load.
+The plugin detects which SEO plugin you have active and automatically writes content to
+the right place. If you later install or switch SEO plugins, it adapts on the next admin
+page load.
 
-= What this plugin does NOT do =
+= Built to enhance, not replace =
 
-This plugin does not provide sitemaps, schema.org markup, canonical URL management, redirects, content analysis, or any other general-purpose SEO infrastructure. If you need those, install Yoast SEO, Rank Math, or All in One SEO alongside this plugin — we coexist cleanly.
+CataSEO handles product and post content: descriptions, meta titles, meta descriptions,
+Open Graph fields, focus keyphrases and product image alt text. Your SEO plugin keeps
+handling sitemaps, schema.org markup, canonical URLs, redirects and content analysis. Run
+both — they do different jobs, and they do them in the same fields.
+
+= Blog posts =
+
+CataSEO can draft blog posts from your own catalog — your products, categories and the
+market it identified during setup — and publish them to your WordPress site. Each draft
+is yours to edit before it goes anywhere.
+
+It will also assess a post you already have: what is weak, what is already solid, and a
+suggested replacement title, meta description or meta keywords that you can accept one at
+a time. It never rewrites the body of your post, and a certification, compliance or
+rating it cannot ground is dropped rather than suggested.
+
+Finished a post? Send it to your own Buffer account and it joins the queue you already
+have, to go out on the schedule you already set.
+
+These are ordinary WordPress posts. You do not need a separate blogging plugin, and
+anything CataSEO writes stays on your site if you remove this one.
+
+= In the dashboard =
+
+* A guided six-step setup that begins by reading your own catalog back to you — what you
+  sell, the market you are in, a suggested tone of voice, and the competitors it found.
+  Correct any of it before you continue.
+* An overview screen with product, category and brand counts and a recent activity feed.
+* Products, Categories and Brands each on their own screen, so you can bookmark and link
+  to them.
+* An Analytics screen: domain authority, backlinks, linking root domains, spam score, how
+  many keywords you rank for, your highest-authority pages, and how all of it has moved
+  month over month.
+* Catie, an assistant you can ask about any field while you are setting up, or at any
+  time afterwards.
+* Catalog import that tells you which stage it is on and how much of each kind it has
+  done.
+
+= External service: what this plugin sends, and where =
+
+This plugin is an interface to CataSEO, a paid cloud service operated by Studio 1119, Inc.
+It does not work without an account, and all content generation happens on CataSEO's
+servers — no AI model runs inside WordPress.
+
+Once you connect your store, the following is sent to https://app.cataseo.ai:
+
+* Product data: names, descriptions, categories, brands, image URLs, and the SEO meta
+  fields listed above.
+* Blog post content, for posts you ask CataSEO to write or assess: titles, bodies,
+  excerpts, tags and their meta fields.
+* Your site URL, WordPress and WooCommerce version numbers, which SEO plugin is active,
+  and your site's administrator email address.
+* A notification when a product's SEO fields change in WordPress, so the two stay in step.
+
+No customer, order, payment or personal data from your store is ever transmitted. Nothing
+is sent before you connect the store, and disconnecting stops it.
+
+During setup you are subscribed to a monthly SEO report, emailed to you. You can
+unsubscribe from the Analytics screen at any time.
+
+Terms of service: https://www.cataseo.ai/terms-of-service
+Privacy policy: https://www.cataseo.ai/privacy-policy
 
 == Installation ==
 
-1. Upload the plugin zip through **Plugins > Add New > Upload Plugin**, or install from the WordPress.org directory.
-2. Activate the plugin through the **Plugins** menu in WordPress.
-3. Click the **{{APP_MENU_TITLE}}** menu item in the admin sidebar.
-4. Sign in or create an account to start optimizing your products.
+1. Make sure WooCommerce is installed and activated on your site.
+2. In your WordPress admin, go to **Plugins > Add New** and search for "CataSEO". Click
+   **Install Now**, then **Activate**. (Alternatively, download the zip from this listing
+   and upload it via **Plugins > Add New > Upload Plugin**.)
+3. In the WordPress admin sidebar, go to **WooCommerce > CataSEO**.
+4. Click **Connect to CataSEO**. You will be redirected to WooCommerce's authorization
+   screen.
+5. Review the requested permissions (read and write access to your products) and click
+   **Approve**.
+6. You are returned to the CataSEO page showing **Connection Active**.
+7. Click **Launch Dashboard** to open the CataSEO app and start optimizing your products.
 
 == Frequently Asked Questions ==
 
 = Do I need Yoast / Rank Math / All in One SEO? =
 
-No. If you have one of them, we use it. If you don't, we output the essential meta tags ourselves.
+No. If you have one of them, we use it. If you don't, we output the essential meta tags
+ourselves.
+
+= Does this replace my SEO plugin? =
+
+No. It writes product content into the fields your SEO plugin already manages. Sitemaps,
+schema, canonicals and redirects stay with Yoast, Rank Math or AIOSEO — we fill the fields
+they leave empty.
+
+= Does CataSEO change my products on its own? =
+
+No. It generates suggestions and shows you the current text beside the proposed text.
+Nothing reaches a product until you approve it.
+
+= Do I need an account, and is it free? =
+
+You need a CataSEO account, which you create when you connect the store. The plugin is
+free. CataSEO is a paid service with a free allowance; plans are on cataseo.ai.
+
+= What is sent to CataSEO's servers? =
+
+See "External service" above for the full list. In short: product content and store
+metadata, once you have connected. Never customer or order data.
 
 = Where is my content stored? =
 
-Your generated content is stored in your WordPress database as standard post meta — the same place any SEO plugin stores its fields. If you uninstall this plugin, your content stays.
+Your generated content is stored in your WordPress database as standard post meta — the
+same place any SEO plugin stores its fields. If you uninstall this plugin, your content
+stays.
 
 = Does this plugin slow down my site? =
 
-The plugin only loads code on WooCommerce product pages (to output meta tags in standalone mode) and inside the {{APP_MENU_TITLE}} admin page (to load the interface). It does nothing on the front end otherwise.
+The plugin only loads code on WooCommerce product pages, to output meta tags when no SEO
+plugin is installed, and on its own admin page. It does nothing else on the front end.
+
+== Screenshots ==
+
+1. The CataSEO product dashboard: every product in your catalog with its optimization status, ready to work through one at a time or in batches.
+2. Side-by-side comparison of original vs. AI-optimized product names and descriptions.
+3. AI-generated SEO meta: page titles, meta descriptions, and keywords.
+4. Ready-to-post social media content with Open Graph titles and descriptions.
+5. CataSEO dashboard page in the WordPress admin under WooCommerce, showing SEO plugin detection, connection status, and the Launch button.
 
 == Changelog ==
 
-= {{APP_VERSION}} =
-* Initial release.
+= 1.0.3 =
+* Add: REST endpoints for blog posts, so CataSEO can draft, assess and publish WordPress posts for your store. This release is required for any of the blog features.
+* Fix: the "View documentation" link opened a page that no longer exists.
+* Fix: the plugin no longer contacts the CataSEO service before the store has been connected.
+* Add: WooCommerce is now declared as a required plugin, so WordPress can warn you before activation rather than after.
+* Tweak: the "no SEO plugin detected" notice on product screens can now be dismissed.
+* Docs: the listing now documents exactly what data is sent to the CataSEO service, and links the terms of service and privacy policy.
 
 == Upgrade Notice ==
 
-= {{APP_VERSION}} =
-Initial release.
+= 1.0.3 =
+Adds blog post support, fixes a broken help link, and stops the plugin contacting CataSEO before you have connected your store. Required for the blog features; recommended for everyone.
