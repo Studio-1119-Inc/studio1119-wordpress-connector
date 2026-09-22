@@ -61,8 +61,16 @@ class SEOMetaNotifierTest extends TestCase {
 	 * @return void
 	 */
 	private function stub_wp(): void {
-		// get_option is called by Plugin::get_detected_mode().
-		Functions\when( 'get_option' )->justReturn( false );
+		// get_option is read twice on the delivery path: by
+		// Plugin::get_detected_mode() for the cached SEO mode (false → live
+		// detection → 'standalone'), and by Admin_Page::is_connected(), which
+		// must be true or the notifier sends nothing. The pre-connection
+		// behaviour is covered by ConnectionGateTest.
+		Functions\when( 'get_option' )->alias(
+			static function ( $name, $default_value = false ) {
+				return 'testapp_connected' === $name ? '1' : $default_value;
+			}
+		);
 		Functions\when( 'get_post_type' )->justReturn( 'product' );
 		Functions\when( 'get_site_url' )->justReturn( 'https://shop.example.com' );
 		Functions\when( 'wp_json_encode' )->alias( 'json_encode' );

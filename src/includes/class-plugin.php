@@ -74,9 +74,20 @@ class Plugin {
 
 		// SEO subsystems — only for SEO-type apps.
 		if ( 'seo' === self::const_value( 'APP_TYPE' ) ) {
+			// Local to this site: renders meta tags into the product page head.
+			// Makes no network call, so it runs whether or not the store is
+			// connected — a disconnected store keeps the SEO value it has.
 			Standalone_Head::register();
-			SEO_Meta_Notifier::register();
-			Taxonomy_Notifier::register();
+
+			// These two POST product and taxonomy data to our backend. Nothing
+			// may leave the site until the merchant has authorized it by
+			// completing the WooCommerce connection handshake, so the hooks are
+			// not attached at all before then. Both deliver() methods re-check
+			// the same condition.
+			if ( Admin_Page::is_connected() ) {
+				SEO_Meta_Notifier::register();
+				Taxonomy_Notifier::register();
+			}
 		}
 	}
 

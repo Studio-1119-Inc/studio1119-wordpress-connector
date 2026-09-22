@@ -138,6 +138,14 @@ class Taxonomy_Notifier {
 			return;
 		}
 
+		// Consent gate — see SEO_Meta_Notifier::deliver(). Plugin::boot() does
+		// not attach the term hooks until the store is connected; this second
+		// check means a queued event cannot be sent by any other route.
+		if ( ! Admin_Page::is_connected() ) {
+			self::$pending = array();
+			return;
+		}
+
 		$callback_url = self::get_callback_url();
 		if ( ! $callback_url ) {
 			return;

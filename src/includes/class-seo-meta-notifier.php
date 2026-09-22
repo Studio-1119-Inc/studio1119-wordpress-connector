@@ -113,6 +113,15 @@ class SEO_Meta_Notifier {
 			return;
 		}
 
+		// Consent gate. Plugin::boot() already declines to attach the hooks
+		// that fill $pending until the store is connected; this second check
+		// means no queued payload can be sent by any other route, including a
+		// connection revoked part way through the request.
+		if ( ! Admin_Page::is_connected() ) {
+			self::$pending = array();
+			return;
+		}
+
 		$callback_url = self::get_callback_url();
 		if ( ! $callback_url ) {
 			return;
