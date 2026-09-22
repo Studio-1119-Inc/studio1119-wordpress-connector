@@ -9,7 +9,7 @@
  * License:     GPLv2 or later
  * License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  * Text Domain: {{APP_TEXT_DOMAIN}}
- * Requires at least: 6.4
+ * Requires at least: 7.0
  * Requires PHP: 7.4
  * WC requires at least: 9.6
  * WC tested up to: 10.6.2
