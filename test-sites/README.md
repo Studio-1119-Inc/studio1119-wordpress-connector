@@ -70,6 +70,31 @@ npx tsx scripts/export-seed-products.ts
 `/tmp/cataseo-seed-products.json`) and creates products in every site via
 `wp wc product create`.
 
+## Webhooks to a local receiver
+
+`setup.sh` installs `mu-plugins/allow-loopback-webhooks.php` into every site.
+Without it, a WooCommerce webhook pointed at `http://localhost:<port>/...`
+never arrives — and says nothing about why. WC delivers with
+`wp_safe_remote_request()`, which rejects loopback hosts *and* any port
+outside 80/443/8080; both rejections leave the Action Scheduler job
+`completed` and the webhook's `failure_count` empty.
+
+A webhook pointed at a public URL (an ngrok tunnel, say) needs none of this.
+Neither do the connector's own notifications — they use `wp_remote_post()`,
+which does not validate the URL.
+
+Delivery is queued, and WP-Cron does not run on this harness, so nothing
+leaves until you drain the queue:
+
+```bash
+wp --path=sites/yoast action-scheduler run
+```
+
+Drain *between* steps when you are measuring a sequence. Action Scheduler
+collapses identical pending actions and WooCommerce builds the payload at
+delivery time, so three changes to one order inside one undrained window
+arrive as a single delivery carrying only the final state.
+
 ## Notes
 
 - `wp server` is PHP's built-in single-request web server. Fine for manual

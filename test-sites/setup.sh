@@ -41,6 +41,10 @@ while IFS='|' read -r SLUG PORT DB SEO_PLUGIN; do
     echo "=== [$SLUG] $URL ==="
 
     if [ -f "$SITE_DIR/wp-config.php" ]; then
+        # Still refresh the mu-plugins — they are cheap, they are the part of
+        # a site that lives in git, and an existing harness should pick up a
+        # new one without a full reset.
+        install_mu_plugins "$SLUG"
         echo "[$SLUG] wp-config.php already exists — skipping. Run ./reset.sh to start over."
         continue
     fi
@@ -71,6 +75,10 @@ while IFS='|' read -r SLUG PORT DB SEO_PLUGIN; do
         --admin_email="$ADMIN_EMAIL" \
         --skip-email \
         --quiet
+
+    # Before WooCommerce, so the first webhook anyone registers can actually
+    # be delivered to a local receiver. See mu-plugins/allow-loopback-webhooks.php.
+    install_mu_plugins "$SLUG"
 
     echo "[$SLUG] installing WooCommerce..."
     wp --path="$SITE_DIR" plugin install woocommerce --activate --quiet

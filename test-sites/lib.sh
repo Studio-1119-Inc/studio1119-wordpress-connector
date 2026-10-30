@@ -6,6 +6,7 @@
 #   TEST_SITES_DIR   absolute path to test-sites/
 #   SITES_DIR        absolute path to test-sites/sites/
 #   SITES_CONF       absolute path to test-sites/sites.conf
+#   MU_PLUGINS_DIR   absolute path to test-sites/mu-plugins/
 #   CREDS_FILE       absolute path to test-sites/.credentials
 #   PID_FILE         absolute path to test-sites/.pids
 #
@@ -17,12 +18,14 @@
 #   admin_email              Echoes the admin email (default: admin@test.local).
 #   site_path <slug>         Echoes the absolute path to a site's WP install.
 #   wp_cmd <slug> <args...>  Runs `wp` against the given site with --path and.
+#   install_mu_plugins <slug>  Copies test-sites/mu-plugins/*.php into the site.
 
 set -euo pipefail
 
 TEST_SITES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SITES_DIR="$TEST_SITES_DIR/sites"
 SITES_CONF="$TEST_SITES_DIR/sites.conf"
+MU_PLUGINS_DIR="$TEST_SITES_DIR/mu-plugins"
 CREDS_FILE="$TEST_SITES_DIR/.credentials"
 PID_FILE="$TEST_SITES_DIR/.pids"
 
@@ -86,4 +89,24 @@ wp_cmd() {
     local slug="$1"
     shift
     wp --path="$(site_path "$slug")" "$@"
+}
+
+install_mu_plugins() {
+    # Copy the harness's must-use plugins into a site.
+    #
+    # Idempotent, and setup.sh runs it for sites that already exist as well as
+    # new ones. That is the point: ./sites/ is generated and gitignored, and
+    # reset.sh deletes it, so a mu-plugin that only ever lived there is lost
+    # on the next reset and the problem it solves comes back looking new.
+    local slug="$1"
+    local dest file
+    dest="$(site_path "$slug")/wp-content/mu-plugins"
+
+    [ -d "$MU_PLUGINS_DIR" ] || return 0
+    mkdir -p "$dest"
+    for file in "$MU_PLUGINS_DIR"/*.php; do
+        [ -e "$file" ] || continue
+        cp "$file" "$dest/"
+        echo "[$slug] mu-plugin: $(basename "$file")"
+    done
 }
